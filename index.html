@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Human Made — Building Places Together</title>
+<meta name="description" content="Human Made creates architecture through people — their knowledge, hands, ideas, and presence. First project: Indonesia, 2027.">
+<meta name="theme-color" content="#EDE0D0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── tokens ── */
+:root {
+  --bg:    #F8F3EE;
+  --ink:   #4E0000;
+  --body:  #3a1a0a;
+  --dim:   #8a5c4a;
+  --faint: #e0d4c8;
+  --terra: #8b4a2a;
+  --mono: 'Roboto Mono', ui-monospace, monospace;
+  --sans: 'Roboto', system-ui, sans-serif;
+  --px: clamp(1.5rem, 7vw, 6rem);
+}
+
+/* ── reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+html { scroll-behavior: smooth }
+
+body {
+  background-color: var(--bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 300;
+  overflow-x: hidden;
+}
+::selection { background: var(--ink); color: var(--bg) }
+
+/* ── skip link ── */
+.skip-link {
+  position: absolute; top: -100%; left: 1rem; z-index: 9999;
+  background: var(--ink); color: var(--bg);
+  font-family: var(--mono); font-size: .75rem; letter-spacing: .1em;
+  padding: .6rem 1rem; border-radius: 2px; text-decoration: none;
+}
+.skip-link:focus { top: 1rem }
+
+/* ── focus ── */
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 2px }
+
+/* ── type ── */
+.eyebrow {
+  font-family: var(--mono); font-size: .78rem;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--dim);
+}
+h1, h2, h3 { font-family: var(--mono); font-weight: 500; color: var(--ink) }
+h1 { font-size: clamp(3rem, 9vw, 7rem); line-height: 1.02; letter-spacing: -.03em }
+h2 { font-size: clamp(2.2rem, 5.5vw, 4.4rem); line-height: 1.06; letter-spacing: -.02em }
+h3 { font-size: clamp(1.3rem, 2.5vw, 2rem); line-height: 1.18 }
+p  { font-size: clamp(1rem, 1.6vw, 1.12rem); line-height: 1.76 }
+
+/* ── buttons ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: .66rem; letter-spacing: .18em;
+  text-transform: uppercase; text-decoration: none;
+  padding: .78rem 1.5rem; border-radius: 2px; cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s;
+  border: 1.5px solid var(--ink); white-space: nowrap;
+}
+.btn-primary  { background: var(--ink); color: var(--bg) }
+.btn-primary:hover  { background: var(--terra); border-color: var(--terra) }
+.btn-secondary { background: transparent; color: var(--ink) }
+.btn-secondary:hover { background: rgba(78,0,0,.08) }
+
+/* ══════════════════════════════
+   HEADER
+══════════════════════════════ */
+header.site-header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center;
+  padding: 1rem var(--px);
+  background: rgba(248,243,238,.93);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(78,0,0,.1);
+}
+.site-brand {
+  font-family: var(--mono);
+  font-size: clamp(.95rem, 1.8vw, 1.35rem);
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  flex-shrink: 0;
+  font-weight: 500;
+  margin-right: auto;
+}
+nav.site-nav {
+  display: flex; gap: 1.8rem; align-items: center;
+}
+nav.site-nav a {
+  font-family: var(--mono); font-size: .63rem; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--dim); text-decoration: none;
+  transition: color .2s;
+}
+nav.site-nav a:hover { color: var(--ink) }
+nav.site-nav .btn { margin-left: .6rem }
+@media (max-width: 760px) {
+  nav.site-nav a:not(.btn) { display: none }
+}
+
+/* ══════════════════════════════
+   HERO
+══════════════════════════════ */
+#hero {
+  min-height: 100svh;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 8rem var(--px) 5rem;
+  position: relative; overflow: hidden;
+}
+.hero-map {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: flex-end;
+  pointer-events: none; z-index: 0;
+  padding-right: 0;
+}
+.hero-map img {
+  width: min(115vw, 1400px);
+  max-height: 90vh;
+  object-fit: contain;
+  object-position: center;
+  opacity: 0;
+  animation: mapFadeIn 2.8s ease .2s forwards;
+  /* shift right so map center is visible */
+  transform-origin: center;
+}
+@keyframes mapFadeIn {
+  from { opacity: 0; transform: scale(1.06) }
+  to   { opacity: .55; transform: scale(1) }
+}
+.hero-copy {
+  position: relative; z-index: 2;
+  max-width: 44rem;
+}
+.hero-copy .eyebrow { margin-bottom: 1.4rem }
+.hero-copy h1 { margin-bottom: 1.8rem }
+.hero-copy > p {
+  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+  color: var(--body); max-width: 38rem; margin-bottom: 2.6rem;
+}
+.hero-cta { display: flex; gap: 1rem; flex-wrap: wrap }
+.hero-receipt {
+  display: flex; gap: clamp(1.4rem, 3.5vw, 3rem); flex-wrap: wrap;
+  border-top: 1px solid rgba(78,0,0,.18);
+  padding-top: 1.8rem; margin-top: 3.5rem;
+}
+.hero-receipt-item .label {
+  font-family: var(--mono); font-size: .58rem; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--dim); display: block; margin-bottom: .3rem;
+}
+.hero-receipt-item .value {
+  font-family: var(--mono); font-size: .82rem; color: var(--ink);
+}
+
+/* ══════════════════════════════
+   VALUES — 3-column card grid
+══════════════════════════════ */
+#values {
+  border-top: 1px solid rgba(78,0,0,.1);
+}
+.values-header {
+  padding: 7rem var(--px) 4rem;
+}
+.values-header .eyebrow { margin-bottom: .8rem }
+
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1rem, 2vw, 2rem);
+  padding: 0 var(--px) 7rem;
+  border-top: 1px solid rgba(78,0,0,.07);
+  padding-top: 4rem;
+  align-items: stretch;
+}
+
+.value-card {
+  display: flex; flex-direction: column;
+  border: 1px solid rgba(78,0,0,.1);
+  padding: clamp(1.8rem, 3vw, 2.8rem);
+  opacity: 0; transform: translateY(20px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+.value-card:nth-child(2) { transition-delay: .12s }
+.value-card:nth-child(3) { transition-delay: .24s }
+.value-card.in-view { opacity: 1; transform: none }
+
+.value-pic {
+  height: 200px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 2rem;
+}
+.value-pic img {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.value-text .num {
+  font-family: var(--mono); font-size: .6rem; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--dim); margin-bottom: .8rem; display: block;
+}
+.value-text h3 { margin-bottom: 1rem; font-size: clamp(1.4rem, 2.4vw, 2rem) }
+.value-text p  { font-size: clamp(.95rem, 1.4vw, 1.05rem); color: var(--body); line-height: 1.75; margin: 0 }
+
+@media (max-width: 860px) {
+  .values-grid { grid-template-columns: 1fr; gap: 1.5rem }
+  .value-pic { height: 160px }
+}
+
+/* ══════════════════════════════
+   VISION — full screen
+══════════════════════════════ */
+#vision {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  border-top: 1px solid rgba(78,0,0,.1);
+}
+@media (max-width: 860px) {
+  #vision { grid-template-columns: 1fr; min-height: auto }
+}
+.vision-copy {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 6rem var(--px) 6rem clamp(1.5rem, 7vw, 6rem);
+}
+.vision-copy .eyebrow { margin-bottom: 1.2rem }
+.vision-copy h2 { margin-bottom: 1.6rem }
+.vision-copy blockquote {
+  font-size: clamp(1.2rem, 2.4vw, 1.7rem);
+  font-family: var(--mono); font-weight: 400;
+  color: var(--ink); line-height: 1.5;
+  border-left: 3px solid var(--terra);
+  padding-left: 1.3rem;
+  margin-bottom: 1.8rem;
+}
+.vision-copy p { font-size: clamp(1rem, 1.5vw, 1.12rem); color: var(--body); max-width: 30rem }
+.vision-image {
+  position: relative; overflow: hidden;
+}
+.vision-image img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center top;
+  display: block;
+}
+@media (max-width: 860px) {
+  .vision-copy { padding: 4rem var(--px) }
+  .vision-image { min-height: 50vh; position: relative }
+  .vision-image img { position: relative; inset: auto; width: 100%; height: auto; max-height: 55vh; object-fit: cover }
+}
+
+/* ══════════════════════════════
+   TIMETABLE — full page
+══════════════════════════════ */
+#timetable {
+  min-height: 100svh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 7rem var(--px);
+  border-top: 1px solid rgba(78,0,0,.1);
+}
+.timetable-header { margin-bottom: 7rem }
+.timetable-header .eyebrow { margin-bottom: 1.2rem }
+
+/* horizontal layout */
+.timeline-h {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  position: relative;
+  list-style: none;
+}
+/* connecting line across top */
+.timeline-h::before {
+  content: '';
+  position: absolute; top: 8px; left: 0; right: 0;
+  height: 1px; background: rgba(78,0,0,.2);
+}
+.tl-item {
+  padding: 2.4rem 2.5rem 0 0;
+  position: relative;
+  opacity: 0; transform: translateY(16px);
+  transition: opacity .55s ease, transform .55s ease;
+}
+.tl-item:nth-child(2) { transition-delay: .1s }
+.tl-item:nth-child(3) { transition-delay: .2s }
+.tl-item:nth-child(4) { transition-delay: .3s }
+.tl-item.in-view { opacity: 1; transform: none }
+
+/* dot on the line */
+.tl-item::before {
+  content: '';
+  position: absolute; top: 4px; left: 0;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--ink);
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+.tl-item.active::before {
+  background: var(--terra); box-shadow: 0 0 0 1px var(--terra);
+  width: 11px; height: 11px; top: 3px;
+}
+.tl-period {
+  font-family: var(--mono); font-size: .72rem; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--dim); margin-bottom: 1rem;
+}
+.tl-title {
+  font-family: var(--mono); font-size: clamp(1rem, 1.8vw, 1.3rem);
+  color: var(--ink); margin-bottom: .7rem; font-weight: 500; line-height: 1.3;
+}
+.tl-desc { font-size: clamp(.92rem, 1.4vw, 1.05rem); color: var(--body); line-height: 1.75 }
+
+/* mobile: vertical */
+@media (max-width: 680px) {
+  #timetable { min-height: auto; padding: 5rem var(--px) }
+  .timeline-h {
+    grid-template-columns: 1fr;
+    padding-left: 1.5rem;
+  }
+  .timeline-h::before {
+    top: 0; bottom: 0; left: 4px; right: auto;
+    width: 1px; height: auto;
+  }
+  .tl-item { padding: 0 0 2.8rem 2rem }
+  .tl-item::before { top: 6px; left: -5px }
+  .tl-item.active::before { top: 5px; left: -6px }
+}
+
+/* ══════════════════════════════
+   GET INVOLVED — full page
+══════════════════════════════ */
+#get-involved {
+  min-height: 100svh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 7rem var(--px);
+  border-top: 1px solid rgba(78,0,0,.1);
+}
+.involve-inner {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: clamp(2.5rem, 7vw, 7rem); align-items: start;
+}
+@media (max-width: 700px) {
+  .involve-inner { grid-template-columns: 1fr; gap: 3.5rem }
+}
+.involve-copy .eyebrow { margin-bottom: 1rem }
+.involve-copy h2 { margin-bottom: 1.1rem }
+.involve-copy > p {
+  font-size: clamp(1rem, 1.6vw, 1.12rem);
+  color: var(--body); max-width: 34rem; margin-bottom: 2.5rem;
+}
+.involve-actions { display: flex; gap: 1rem; flex-wrap: wrap }
+.involve-contact { display: flex; flex-direction: column; gap: 2.2rem }
+.contact-row .label {
+  font-family: var(--mono); font-size: .6rem; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--dim); display: block; margin-bottom: .4rem;
+}
+.contact-row a {
+  font-family: var(--mono); font-size: 1rem; color: var(--ink);
+  text-decoration: none; border-bottom: 1px solid rgba(78,0,0,.22);
+  padding-bottom: 2px; transition: border-color .2s;
+}
+.contact-row a:hover { border-color: var(--ink) }
+.legal-note { font-family: var(--mono); font-size: .66rem; color: var(--dim); line-height: 1.65 }
+
+/* ── footer ── */
+footer {
+  padding: 2rem var(--px);
+  border-top: 1px solid rgba(78,0,0,.1);
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+}
+footer p { font-family: var(--mono); font-size: .58rem; letter-spacing: .14em; text-transform: uppercase; color: var(--dim) }
+
+/* ══════════════════════════════
+   MODAL
+══════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(58,26,10,.65);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem;
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto }
+.modal {
+  background: var(--ink); color: var(--bg);
+  padding: clamp(1.8rem, 5vw, 3rem);
+  max-width: 480px; width: 100%; border-radius: 2px;
+  position: relative;
+  transform: translateY(18px); transition: transform .28s;
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-overlay.open .modal { transform: none }
+.modal-close {
+  position: absolute; top: 1.2rem; right: 1.2rem;
+  background: none; border: none; cursor: pointer;
+  font-family: var(--mono); font-size: 1.1rem;
+  color: rgba(237,224,208,.5); transition: color .2s; line-height: 1; padding: .3rem;
+}
+.modal-close:hover { color: var(--bg) }
+.modal .eyebrow { color: rgba(248,243,238,.5); margin-bottom: 1rem }
+.modal h3 { font-size: clamp(1.1rem, 3vw, 1.4rem); color: var(--bg); margin-bottom: .6rem }
+.modal > p { font-size: .88rem; color: rgba(248,243,238,.75); line-height: 1.65; margin-bottom: 2rem }
+.field { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1.2rem }
+.field label {
+  font-family: var(--mono); font-size: .6rem; letter-spacing: .15em;
+  text-transform: uppercase; color: rgba(248,243,238,.5);
+}
+.field input, .field textarea {
+  background: rgba(248,243,238,.08); border: 1px solid rgba(248,243,238,.2);
+  border-radius: 2px; color: var(--bg);
+  font-family: var(--sans); font-weight: 300; font-size: .92rem;
+  padding: .75rem .9rem; transition: border-color .2s; resize: vertical; width: 100%;
+}
+.field input:focus, .field textarea:focus {
+  outline: 2px solid rgba(248,243,238,.45); outline-offset: 0;
+  border-color: rgba(248,243,238,.45);
+}
+.field input::placeholder, .field textarea::placeholder { color: rgba(248,243,238,.3) }
+.modal .btn-submit {
+  display: block; width: 100%; padding: .85rem 1.5rem;
+  background: var(--bg); color: var(--ink); border: none;
+  font-family: var(--mono); font-size: .66rem; letter-spacing: .18em;
+  text-transform: uppercase; cursor: pointer; border-radius: 2px;
+  transition: background .2s; margin-top: .5rem;
+}
+.modal .btn-submit:hover { background: #f0ebe4 }
+.modal-confirm {
+  display: none; text-align: center;
+  font-family: var(--mono); font-size: .85rem; color: var(--bg);
+  padding: 2rem 0; line-height: 1.8;
+}
+.modal-confirm.show { display: block }
+
+/* ── utils ── */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+@media (max-width: 480px) {
+  .involve-actions { flex-direction: column }
+  .involve-actions .btn { text-align: center }
+}
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- ══ HEADER ══ -->
+<header class="site-header" id="site-header">
+  <a class="site-brand" href="#" aria-label="Human Made — Studio Less">Studio Less</a>
+  <nav class="site-nav" aria-label="Page sections">
+    <a href="#values">The Idea</a>
+    <a href="#vision">Vision</a>
+    <a href="#timetable">Timeline</a>
+    <a href="#get-involved">Get Involved</a>
+    <a class="btn btn-primary" href="#get-involved">Participate</a>
+  </nav>
+</header>
+
+<main id="main-content">
+
+<!-- ══ HERO ══ -->
+<section id="hero" aria-labelledby="hero-heading">
+  <div class="hero-map" aria-hidden="true">
+    <img src="assets/MAP Sumbawa.png" alt="">
+  </div>
+  <div class="hero-copy">
+    <p class="eyebrow">An architecture + participation initiative &middot; Indonesia 2027</p>
+    <h1 id="hero-heading">Building places<br>together.</h1>
+    <p>Human Made is a project by Studio Less — an architecture initiative that creates places through people. Their knowledge, hands, ideas, and presence. Not a charity. Not development. Architecture that starts with the people it belongs to.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#get-involved">Be part of it</a>
+      <a class="btn btn-secondary" href="#values">Learn more</a>
+    </div>
+    <div class="hero-receipt" role="list" aria-label="Project facts">
+      <div class="hero-receipt-item" role="listitem"><span class="label">Initiated by</span><span class="value">Studio Less</span></div>
+      <div class="hero-receipt-item" role="listitem"><span class="label">First project</span><span class="value">Indonesia</span></div>
+      <div class="hero-receipt-item" role="listitem"><span class="label">Status</span><span class="value">Concept phase</span></div>
+      <div class="hero-receipt-item" role="listitem"><span class="label">Participation</span><span class="value">Open</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ VALUES ══ -->
+<section id="values" aria-labelledby="values-heading">
+  <div class="values-header">
+    <p class="eyebrow">What guides us</p>
+    <h2 id="values-heading" style="margin-top:.8rem">Three foundations</h2>
+  </div>
+
+  <div class="values-grid">
+    <div class="value-card" data-observe>
+      <div class="value-pic">
+        <img src="assets/Icon Natur.png" alt="Hand-drawn tree — nature as foundation">
+      </div>
+      <div class="value-text">
+        <span class="num">01</span>
+        <h3>Nature</h3>
+        <p>Materials come from local and natural sources. The building knows its place. Material reality, not sustainability aesthetics. Where wood, stone, earth, or plant fibres exist locally, they carry knowledge about how a place behaves.</p>
+      </div>
+    </div>
+
+    <div class="value-card" data-observe>
+      <div class="value-pic">
+        <img src="assets/Icon Mensch.png" alt="Row of people — human made">
+      </div>
+      <div class="value-text">
+        <span class="num">02</span>
+        <h3>Human Made</h3>
+        <p>Architecture emerges from the people involved. Every participant brings something: craft, labour, ideas, knowledge. A local craftsperson's understanding of timber is as essential as an engineer's calculations. Making is central.</p>
+      </div>
+    </div>
+
+    <div class="value-card" data-observe>
+      <div class="value-pic">
+        <img src="assets/Icon Zusammenarbeit.png" alt="Two people working together, held by hands">
+      </div>
+      <div class="value-text">
+        <span class="num">03</span>
+        <h3>Work &amp; Live Together</h3>
+        <p>Building and inhabiting happen side by side. The cluster is not just constructed — it is lived in from the start, connecting skills, traditions, and experiences across generations and geographies.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ VISION ══ -->
+<section id="vision" aria-labelledby="vision-heading">
+  <div class="vision-copy">
+    <p class="eyebrow">The vision</p>
+    <h2 id="vision-heading">Work together.<br>Live together.</h2>
+    <blockquote>Weaving all together — connecting people, skills, traditions and experiences.</blockquote>
+    <p>The first project is a cluster at the field edge in Indonesia. A group of buildings built together and inhabited together — workshop, living, gathering, and growing around a shared space. A place for making, learning, and living.</p>
+  </div>
+  <div class="vision-image">
+    <img src="assets/Vision.png" alt="Axonometric drawing of the Human Made cluster in Indonesia — buildings, trees, paths and people working together">
+  </div>
+</section>
+
+<!-- ══ TIMETABLE ══ -->
+<section id="timetable" aria-labelledby="timetable-heading">
+  <div class="timetable-header">
+    <p class="eyebrow">What's coming next</p>
+    <h2 id="timetable-heading">The road ahead</h2>
+  </div>
+  <ol class="timeline-h" aria-label="Project timeline">
+    <li class="tl-item active" data-observe>
+      <p class="tl-period">Now — Nov 2026</p>
+      <p class="tl-title">Concept development + preparation</p>
+      <p class="tl-desc">Project framing, site relationships, first partnerships. This is where we are now.</p>
+    </li>
+    <li class="tl-item" data-observe>
+      <p class="tl-period">November 2026</p>
+      <p class="tl-title">First public presentations</p>
+      <p class="tl-desc">The project is introduced publicly. Participation opens in full.</p>
+    </li>
+    <li class="tl-item" data-observe>
+      <p class="tl-period">Dec 2026 — Jan 2027</p>
+      <p class="tl-title">Development + elaboration</p>
+      <p class="tl-desc">Community consultation, design development, material and logistics planning.</p>
+    </li>
+    <li class="tl-item" data-observe>
+      <p class="tl-period">From February 2027</p>
+      <p class="tl-title">On-location start</p>
+      <p class="tl-desc">Planning and participation phase begins on site in Indonesia. Building to follow.</p>
+    </li>
+  </ol>
+</section>
+
+<!-- ══ GET INVOLVED ══ -->
+<section id="get-involved" aria-labelledby="involve-heading">
+  <div class="involve-inner">
+    <div class="involve-copy">
+      <p class="eyebrow">Get involved</p>
+      <h2 id="involve-heading">This is open.<br>Come as you are.</h2>
+      <p>No matter if you want to build, share an idea, offer expertise, or simply stay close to the project — there is a place for you here.</p>
+      <div class="involve-actions">
+        <a class="btn btn-secondary" href="mailto:hello@humanmade.studio">Get in touch</a>
+        <button class="btn btn-primary" id="open-modal" aria-haspopup="dialog">Start a collaboration</button>
+      </div>
+    </div>
+    <div class="involve-contact" aria-label="Contact information">
+      <div class="contact-row">
+        <span class="label">Email</span>
+        <a href="mailto:hello@humanmade.studio">hello@humanmade.studio</a>
+      </div>
+      <div class="contact-row">
+        <span class="label">Instagram</span>
+        <a href="https://instagram.com/humanmade.studio" target="_blank" rel="noopener noreferrer">@humanmade.studio</a>
+      </div>
+      <div class="contact-row">
+        <span class="label">LinkedIn</span>
+        <a href="https://linkedin.com/company/humanmade-studio" target="_blank" rel="noopener noreferrer">Human Made</a>
+      </div>
+      <div class="contact-row">
+        <p class="legal-note">All expressions of interest are non-binding at this stage. Human Made is in concept phase.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <p>&copy; 2026 Human Made &middot; Initiated by Studio Less</p>
+  <p>An open architecture and building initiative</p>
+</footer>
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <button class="modal-close" id="close-modal" aria-label="Close dialog">&times;</button>
+    <p class="eyebrow">Start a collaboration</p>
+    <h3 id="modal-title">We are happy to hear from you.</h3>
+    <p>No matter if it is an idea, a critique, or a willingness to contribute — tell us what brings you here.</p>
+    <form id="collab-form" novalidate>
+      <div class="field">
+        <label for="cf-purpose">What brings you here?</label>
+        <textarea id="cf-purpose" rows="4" placeholder="An idea, a question, a skill you want to bring…" required aria-required="true"></textarea>
+      </div>
+      <div class="field">
+        <label for="cf-email">Email address <span aria-hidden="true">*</span><span class="sr-only">(required)</span></label>
+        <input id="cf-email" type="email" placeholder="your@email.com" required aria-required="true" autocomplete="email">
+      </div>
+      <button class="btn-submit" type="submit">Send</button>
+    </form>
+    <div class="modal-confirm" id="modal-confirm" role="status" aria-live="polite">
+      Thank you — we have received your message<br>and will be in touch.
+    </div>
+  </div>
+</div>
+
+<script>
+// scroll reveal
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in-view'); revealObs.unobserve(e.target) }
+  })
+}, { threshold: 0.1 })
+document.querySelectorAll('[data-observe]').forEach(el => revealObs.observe(el))
+
+// modal
+const overlay  = document.getElementById('modal-overlay')
+const openBtn  = document.getElementById('open-modal')
+const closeBtn = document.getElementById('close-modal')
+const form     = document.getElementById('collab-form')
+const confirm  = document.getElementById('modal-confirm')
+let lastFocus
+
+function openModal()  {
+  lastFocus = document.activeElement
+  overlay.classList.add('open')
+  document.body.style.overflow = 'hidden'
+  closeBtn.focus()
+}
+function closeModal() {
+  overlay.classList.remove('open')
+  document.body.style.overflow = ''
+  form.style.display = ''
+  confirm.classList.remove('show')
+  form.reset()
+  if (lastFocus) lastFocus.focus()
+}
+openBtn.addEventListener('click', openModal)
+closeBtn.addEventListener('click', closeModal)
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal() })
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal() })
+
+form.addEventListener('submit', e => {
+  e.preventDefault()
+  if (!document.getElementById('cf-purpose').value.trim() || !document.getElementById('cf-email').value.trim()) return
+  form.style.display = 'none'
+  confirm.classList.add('show')
+  setTimeout(closeModal, 3200)
+})
+
+// focus trap
+overlay.addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return
+  const els = overlay.querySelectorAll('button, input, textarea, [tabindex]:not([tabindex="-1"])')
+  const first = els[0], last = els[els.length - 1]
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+})
+</script>
+</body>
+</html>
