@@ -14,17 +14,33 @@ const ease=v=>{v=clamp(v);return v*v*(3-2*v)};
 const round=n=>Number(n.toFixed(2));
 const PETALS=Array.from({length:8},(_,i)=>i*45);
 
-/* Monotone-y cubic joins preserve a genuinely organic silhouette without
-   rendering the viewport-to-path lookup ambiguous on reverse scrolling. */
+/* C1-continuous botanical spline. The previous segment-local control
+   handles had different slopes at shared points, creating visible corners.
+   Compute ONE smoothed derivative per knot, shared by its neighbours.
+   Control-point y is monotone, preserving accurate upward scroll reversal. */
 function organicCurve(points){
  if(points.length<2)return'';
+ const slopes=points.map((p,i)=>{
+  const before=points[Math.max(0,i-1)];
+  const after=points[Math.min(points.length-1,i+1)];
+  const span=Math.max(.25,after.y-before.y);
+  const central=(after.x-before.x)/span;
+  if(i===0||i===points.length-1)return central;
+  const previous=(p.x-before.x)/Math.max(.25,p.y-before.y);
+  const following=(after.x-p.x)/Math.max(.25,after.y-p.y);
+  // Dampen abrupt direction changes instead of carrying corners into
+  // the next curve. Preserve gentle reversals as round inflections.
+  return previous*following<=0?central*.34:central*.83;
+ });
  let d='M '+round(points[0].x)+' '+round(points[0].y);
  for(let i=0;i<points.length-1;i++){
-  const a=points[i],b=points[i+1],prev=points[Math.max(0,i-1)],next=points[Math.min(points.length-1,i+2)];
-  const dy=Math.max(.1,b.y-a.y);
-  const t1=(b.x-prev.x)*.20,t2=(next.x-a.x)*.20;
-  d+=' C '+round(a.x+t1)+' '+round(a.y+dy*.34)
-    +' '+round(b.x-t2)+' '+round(b.y-dy*.34)
+  const a=points[i],b=points[i+1],dy=Math.max(.1,b.y-a.y);
+  // Tangent slopes are shared, so every junction is visually seamless.
+  const handle=dy/3;
+  const c1x=a.x+slopes[i]*handle;
+  const c2x=b.x-slopes[i+1]*handle;
+  d+=' C '+round(c1x)+' '+round(a.y+handle)
+    +' '+round(c2x)+' '+round(b.y-handle)
     +' '+round(b.x)+' '+round(b.y);
  }
  return d;
@@ -68,8 +84,8 @@ function buildRoute(route){
   if(!all.length||p.y>all[all.length-1].y+.09)all.push({x:p.x,y:p.y});
  };
  const sectionX=(s,t)=>{
-  const drift=Math.sin(t*Math.PI*4.4+s.index*.54)*s.amplitude*.91;
-  const slow=Math.sin(t*Math.PI*2.25+s.index*.67)*s.amplitude*.22;
+  const drift=Math.sin(t*Math.PI*3.55+s.index*.54)*s.amplitude*.84;
+  const slow=Math.sin(t*Math.PI*1.75+s.index*.67)*s.amplitude*.29;
   // A left gutter moves towards the edge; right gutter mirrors the shape.
   return s.lane+(s.side==='left'?1:-1)*(drift+slow);
  };
@@ -82,8 +98,8 @@ function buildRoute(route){
   const h=Math.max(80,s.exit-s.entry);
   // Several irregular bends inside each gutter. Each location is spaced
   // in y, never generating the near-straight line of the previous design.
-  for(let step=1;step<=13;step++){
-   const t=step/13;
+  for(let step=1;step<=19;step++){
+   const t=step/19;
    add({x:sectionX(s,t),y:s.entry+h*t});
   }
   const at=[.11,.24,.38,.52,.66,.80,.92];
@@ -104,15 +120,15 @@ function buildRoute(route){
    const crossX=t=>{
     const main=x0+(x1-x0)*ease(t);
     const sway=(compact?16:clamp(gap*.20,36,108));
-    const wave=Math.sin(t*Math.PI*3.4)*Math.sin(t*Math.PI)*sway;
+    const wave=Math.sin(t*Math.PI*2.15)*Math.sin(t*Math.PI)*sway;
     return main+wave;
    };
    // A second, smaller vertical wave removes the ruler-straight
    // diagonal without violating monotone-y progress needed on scroll-up.
    const crossY=t=>start+gap*t+
-     Math.sin(t*Math.PI*2.4)*Math.sin(t*Math.PI)*Math.min(49,gap*.075);
-   for(let step=1;step<=15;step++){
-    const t=step/15;
+     Math.sin(t*Math.PI*1.65)*Math.sin(t*Math.PI)*Math.min(39,gap*.06);
+   for(let step=1;step<=23;step++){
+    const t=step/23;
     add({x:crossX(t),y:crossY(t)});
    }
    [0.18,.31,.45,.57,.70,.83].forEach((t,i)=>{
@@ -240,50 +256,75 @@ export default function BotanicalThread({routeRef,reduced}){
   });
   lengths.current={total,segments};
   el.style.strokeDasharray=String(total);
-  let raf=0;
-  const draw=()=>{
+  let raf=0,displayedLength=null,previousFrame=0,alive=true;
+  const center=root.querySelector('[data-flower-center]');
+  const flower=root.querySelector('.big-botanical-bloom');
+  const draw=(time=0)=>{
    raf=0;
-   if(!routeRef.current||!main.current)return;
-   const tipY=reduced?layout.height:
-     clamp(window.innerHeight*.86-routeRef.current.getBoundingClientRect().top,0,layout.height);
-   let drawn=total;
+   if(!alive||!routeRef.current||!main.current)return;
+   // Wait until the branch is well inside the viewport. The line should
+   // not race far ahead of the reader on every small scroll gesture.
+   const targetY=reduced?layout.height:
+     clamp(window.innerHeight*.53-routeRef.current.getBoundingClientRect().top,0,layout.height);
+   let targetLength=total;
    if(!reduced){
-    // Every cubic segment has strictly increasing y; an actual path-length
-    // lookup eliminates the pauses produced by generic page percentages.
+    // Strictly monotone y means this lookup reverses cleanly, even
+    // across a winding left/right crossover.
     let low=0,high=total;
     for(let i=0;i<19;i++){
      const middle=(low+high)*.5;
-     if(el.getPointAtLength(middle).y<tipY)low=middle;else high=middle;
+     if(el.getPointAtLength(middle).y<targetY)low=middle;else high=middle;
     }
-    drawn=(low+high)*.5;
+    targetLength=(low+high)*.5;
    }
-   el.style.strokeDashoffset=String(Math.max(0,total-drawn));
+   if(displayedLength===null){
+    // Direct scroll/navigation to an anchor must not animate thousands
+    // of pixels from the top of the page on first render.
+    displayedLength=targetLength;
+   }else if(reduced){
+    displayedLength=total;
+   }else{
+    const elapsed=previousFrame?clamp((time-previousFrame)/1000,0,.05):1/60;
+    // Low-pass easing plus an explicit physical maximum path velocity.
+    // Both signs use the same rule: scrolling UP truly retracts leaves.
+    const diff=targetLength-displayedLength;
+    const softness=1-Math.exp(-elapsed/0.34);
+    const maxStep=1040*elapsed;
+    const move=Math.sign(diff)*Math.min(Math.abs(diff),Math.abs(diff)*softness,maxStep);
+    displayedLength=clamp(displayedLength+move,0,total);
+    if(Math.abs(targetLength-displayedLength)<.7)displayedLength=targetLength;
+   }
+   previousFrame=time;
+   el.style.strokeDashoffset=String(Math.max(0,total-displayedLength));
+   // Sprigs grow only once the MAIN drawn tip reaches their attachment;
+   // slowing the vine therefore also slows its foliage and final bloom.
+   const drawnTipY=el.getPointAtLength(displayedLength).y;
    for(const entry of segments){
     const {node,len,group,start,end}=entry;
     const startY=Number(group.dataset.growY);
     const span=Number(group.dataset.growSpan);
-    const p=reduced?1:clamp((tipY-startY)/span);
+    const p=reduced?1:clamp((drawnTipY-startY)/span);
     const fraction=ease((p-start)/Math.max(.02,end-start));
     const offset=len*(1-fraction);
-    if(entry.lastOffset===offset)continue;
+    if(Math.abs((entry.lastOffset??-9999)-offset)<.025)continue;
     node.style.strokeDashoffset=String(offset);
     entry.lastOffset=offset;
    }
-   const center=root.querySelector('[data-flower-center]');
-   if(center){
-    const flower=root.querySelector('.big-botanical-bloom');
-    const p=reduced?1:clamp((tipY-Number(flower.dataset.growY))/
-       Number(flower.dataset.growSpan));
+   if(center&&flower){
+    const p=reduced?1:clamp((drawnTipY-Number(flower.dataset.growY))/
+      Number(flower.dataset.growSpan));
     center.style.opacity=String(ease((p-.83)/.17));
    }
-   root.dataset.scrollTip=String(Math.round(tipY));
-   root.dataset.mainDrawn=String(Math.round(100*drawn/Math.max(1,total)));
+   root.dataset.scrollTip=String(Math.round(drawnTipY));
+   root.dataset.mainDrawn=String(Math.round(100*displayedLength/Math.max(1,total)));
+   // Keep drawing during catch-up even after a touchpad swipe ends.
+   if(!reduced&&Math.abs(targetLength-displayedLength)>.7)request();
   };
-  const request=()=>{if(!raf)raf=requestAnimationFrame(draw)};
+  const request=()=>{if(alive&&!raf)raf=requestAnimationFrame(draw)};
   request();
   window.addEventListener('scroll',request,{passive:true});
   window.addEventListener('resize',request);
-  return()=>{cancelAnimationFrame(raf);
+  return()=>{alive=false;cancelAnimationFrame(raf);
    window.removeEventListener('scroll',request);
    window.removeEventListener('resize',request);
   };
