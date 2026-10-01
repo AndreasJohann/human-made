@@ -173,7 +173,9 @@ function buildRoute(page,route,intro){
  return{
   d:prefix+firstU,prefix,width,height:root.height,sections,markers,
   miniFlowers,flower,compact,heroStart,terminalStart:from.y,
-  uSpace:Math.max(240,Math.min(window.innerHeight*.67,root.height-from.y-window.innerHeight*.18))
+  // Complete the final U while the flower AND picture are still in view.
+  uSpace:Math.max(230,Math.min(window.innerHeight*(compact?.5:.42),
+    root.height-from.y-window.innerHeight*.16))
  };
 }
 
