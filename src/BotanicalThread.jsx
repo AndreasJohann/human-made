@@ -12,7 +12,6 @@ const IDS=['idea','foundations','project','indonesia','road','involved','people'
 const clamp=(v,min=0,max=1)=>Math.max(min,Math.min(max,v));
 const ease=v=>{v=clamp(v);return v*v*(3-2*v)};
 const round=n=>Number(n.toFixed(2));
-const FLIP=7;
 const PETALS=Array.from({length:8},(_,i)=>i*45);
 
 /* Monotone-y cubic joins preserve a genuinely organic silhouette without
@@ -32,7 +31,7 @@ function organicCurve(points){
 }
 function buildRoute(route){
  const root=route.getBoundingClientRect(),width=root.width;
- const compact=window.innerWidth<800;
+ const compact=window.innerWidth<960;
  const sections=IDS.map((id,index)=>{
   const node=route.querySelector('#'+id);
   if(!node)return null;
@@ -43,7 +42,7 @@ function buildRoute(route){
   const contentLeft=box.left-root.left+(parseFloat(innerCSS?.paddingLeft)||0);
   const contentRight=box.right-root.left-(parseFloat(innerCSS?.paddingRight)||0);
   const leftLane=clamp(contentLeft*.49,compact?32:63,Math.max(36,contentLeft-80));
-  const rightLane=clamp(contentRight+(width-contentRight)*.50,contentRight+80,width-48);
+  const rightLane=Math.min(width-39,contentRight+Math.max(30,(width-contentRight)*.53));
   const top=r.top-root.top,bottom=r.bottom-root.top;
   const padTop=parseFloat(style.paddingTop)||120,padBottom=parseFloat(style.paddingBottom)||120;
   const side=compact?'left':index%2?'right':'left';
@@ -164,7 +163,7 @@ function Sprig({marker}){
  </g>;
 }
 function Flower({x,y,scale}){
- return <g data-grow-y={y-115*scale} data-grow-span={310*scale}
+ return <g data-grow-y={y-175*scale} data-grow-span={255*scale}
    transform={'translate('+x+' '+y+') scale('+scale+')'}
    className="big-botanical-bloom">
    <path d="M0 91 C-22 74 -7 45 0 19" className="drawn-twig"
