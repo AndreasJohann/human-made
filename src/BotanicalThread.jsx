@@ -59,7 +59,11 @@ function buildRoute(route){
   const pt=parseFloat(style.paddingTop)||100,pb=parseFloat(style.paddingBottom)||100;
   // The single, continuous path belongs to the same real content gutter
   // in every chapter, not a line that crosses the reader's attention.
-  const lane=clamp(contentLeft-(compact?38:103),compact?34:55,contentLeft-(compact?29:65));
+  // Keep enough space OUTSIDE the stem for the full hand-drawn leaves.
+  // On mobile, stay close to (but never inside) the reading column.
+  const lane=compact
+    ? clamp(contentLeft-20,45,contentLeft-15)
+    : clamp(contentLeft-66,72,contentLeft-31);
   // Wide, slow lateral breathing: never more than half the remaining
   // gutter, so flowers/leaves have room outside the copy.
   const amplitude=compact?clamp(contentLeft*.1,4,9):clamp((contentLeft-lane)*.30,14,33);
