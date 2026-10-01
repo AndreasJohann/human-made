@@ -95,7 +95,7 @@ function BotanicalThread({progress,reduced}){
       {at:.38,d:'M67 603 C87 575 99 578 105 563 C105 589 89 608 67 603 M67 603 L102 566'},
       {at:.63,d:'M57 990 C36 967 22 969 12 952 C16 981 39 1000 57 990 M57 990 L15 957'},
       {at:.84,d:'M59 1308 C78 1290 94 1296 103 1281 C103 1307 80 1321 59 1308 M59 1308 L101 1284'}
-    ].map((leaf,i)=><path key={i} className="thread-leaf" d={leaf.d} style={{opacity:reduced||progress>leaf.at?.83:0,transform:'scale('+(reduced?1:progress>leaf.at?1:.85)+')'}}/> )}
+    ].map((leaf,i)=><path key={i} className="thread-leaf" d={leaf.d} style={{opacity:(reduced||progress>leaf.at)?0.83:0,transform:'scale('+(reduced?1:progress>leaf.at?1:.85)+')'}}/> )}
   </svg>
 }
 function Header({t,lang,setLang,visible}){
