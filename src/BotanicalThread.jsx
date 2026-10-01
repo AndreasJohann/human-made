@@ -44,9 +44,10 @@ function organicCurve(points){
  }
  return d;
 }
-function buildRoute(route){
- const root=route.getBoundingClientRect(),width=root.width;
+function buildRoute(page,route,intro){
+ const root=page.getBoundingClientRect(),width=root.width;
  const compact=window.innerWidth<960;
+ const mobileHero=window.innerWidth<=680;
  const sections=IDS.map((id,index)=>{
   const node=route.querySelector('#'+id);
   if(!node)return null;
@@ -57,63 +58,62 @@ function buildRoute(route){
   const contentLeft=innerBox.left-root.left+(parseFloat(innerStyle?.paddingLeft)||0);
   const top=r.top-root.top,bottom=r.bottom-root.top;
   const pt=parseFloat(style.paddingTop)||100,pb=parseFloat(style.paddingBottom)||100;
-  // The single, continuous path belongs to the same real content gutter
-  // in every chapter, not a line that crosses the reader's attention.
-  // Keep enough space OUTSIDE the stem for the full hand-drawn leaves.
-  // On mobile, stay close to (but never inside) the reading column.
   const lane=compact
     ? clamp(contentLeft-20,45,contentLeft-15)
     : clamp(contentLeft-66,72,contentLeft-31);
-  // Wide, slow lateral breathing: never more than half the remaining
-  // gutter, so flowers/leaves have room outside the copy.
   const amplitude=compact?clamp(contentLeft*.1,4,9):clamp((contentLeft-lane)*.30,14,33);
   const entry=top+pt*.75;
-  const exit=index===6?Math.min(bottom-250,bottom-pb*.76):bottom-pb*.72;
+  // Start the last U beside the biography, leaving the rest of the
+  // section available for the stem to curve BELOW its content.
+  const exit=index===6?Math.min(bottom-pb-35,top+pt+140):bottom-pb*.72;
   return{id,index,top,bottom,entry,exit,lane,amplitude,contentLeft};
  }).filter(Boolean);
  if(sections.length!==IDS.length)return null;
+ const heroRect=intro.getBoundingClientRect();
+ const heroBottom=heroRect.bottom-root.top;
+ // Exact final sticky image placement from Intro: desktop bottom 23%,
+ // mobile bottom 45%. This is the point on the final SHRUNK image edge.
+ const heroStart={
+  x:width*(mobileHero?.05:.06)+Math.min(18,width*.018),
+  y:heroBottom-window.innerHeight*(mobileHero?.45:.23)
+ };
  const points=[],markers=[],miniFlowers=[];
  const add=(x,y)=>{
   if(!points.length||y>points[points.length-1].y+.1)points.push({x,y});
  };
  const sectionX=(s,t)=>{
-  // One broad botanical swing per chapter, with flat, continuous
-  // entry/exit tangents and slightly different sizes to avoid repetition.
   const envelope=Math.sin(Math.PI*t)**2;
   const direction=s.index%3===1?.18:-.75;
   return s.lane+direction*s.amplitude*envelope*(.94+.06*Math.sin(Math.PI*t));
  };
  const first=sections[0];
- // The preceding hero sprout leads visually into this quiet left margin.
- add(first.lane+9,0);
- add(first.lane+4,Math.max(28,first.entry*.28));
- add(first.lane-3,Math.max(48,first.entry*.58));
+ // There is now ONE SVG path starting on the smaller hero's bottom edge.
+ // It continues through the hero-to-content boundary without a seam.
+ add(heroStart.x,heroStart.y);
+ const handoff=Math.max(75,first.entry-heroStart.y);
+ add(heroStart.x-5,heroStart.y+handoff*.17);
+ add(first.lane+8,heroStart.y+handoff*.55);
  add(first.lane,first.entry);
+ markers.push({x:heroStart.x-5,y:heroStart.y+handoff*.23,
+   dir:-1,scale:compact?.47:.65,variant:0});
  sections.forEach((s,index)=>{
   const h=Math.max(50,s.exit-s.entry);
-  // Dense *leaf growth*, not dense oscillations. The stem's shape is
-  // a single large arc, sampled for a continuously rounded spline.
   for(let step=1;step<=18;step++){
    const t=step/18;
    add(sectionX(s,t),s.entry+h*t);
   }
-  const leafPositions=[.09,.19,.30,.42,.54,.66,.78,.89];
-  leafPositions.forEach((t,i)=>{
+  [.09,.19,.30,.42,.54,.66,.78,.89].forEach((t,i)=>{
    if(compact&&i%3===1)return;
    markers.push({x:sectionX(s,t),y:s.entry+h*t,
      dir:-1,scale:compact?.5:.76,variant:(index+i)%3});
   });
-  // Occasionally a restrained hand-drawn blossom emerges from a twig.
-  // These are accents; the full eight-petal flower remains with Lea/Jessi.
   if([1,3,5].includes(index)){
    const t=index===1?.56:index===3?.46:.62;
    miniFlowers.push({x:sectionX(s,t)-(compact?8:15),
-     y:s.entry+h*t,scale:compact?.40:.57});
+     y:s.entry+h*t,scale:compact?.4:.57});
   }
   const next=sections[index+1];
   if(next){
-   // The two chapter lanes differ only slightly. Their connection
-   // uses the existing vertical padding and has no sharp S-crossing.
    const from=sectionX(s,1),to=next.lane,gap=Math.max(1,next.entry-s.exit);
    for(let step=1;step<=10;step++){
     const t=step/10;
@@ -125,18 +125,56 @@ function buildRoute(route){
    }
   }
  });
- const last=sections[sections.length-1];
- const flower={x:width*(compact?.53:.51),y:last.bottom-(compact?128:159),
-   scale:compact?.73:1.27};
- const from=points[points.length-1],flowerBase=flower.y+91*flower.scale;
- const tail=Math.max(1,flowerBase-from.y);
- // ONE outward sweep into the large, central final flower; no zigzags.
- for(let step=1;step<=13;step++){
-  const t=step/13;
-  add(from.x+(flower.x-from.x)*ease(t),from.y+tail*t);
- }
- return{d:organicCurve(points),width,height:root.height,sections,markers,
-  miniFlowers,flower,compact};
+ const people=route.querySelector('#people');
+ const illustration=people?.querySelector('.people-illustration img');
+ const portrait=illustration?.getBoundingClientRect();
+ const section=people.getBoundingClientRect();
+ const picture={
+  left:portrait?portrait.left-root.left:width*.56,
+  right:portrait?portrait.right-root.left:width*.9,
+  top:portrait?portrait.top-root.top:section.top-root.top+230,
+  bottom:portrait?portrait.bottom-root.top:section.bottom-root.top-260
+ };
+ // The picture has its own clear space above it; the blossom is centered
+ // within that space and ABOVE the image, not down at the footer.
+ const flowerScale=compact?.73:1.27;
+ const flower={
+  x:(picture.left+picture.right)*.5,
+  y:picture.top-flowerScale*100-23,
+  scale:flowerScale
+ };
+ const from=points[points.length-1];
+ // The U is OUTSIDE the biography and image: descend down the left margin,
+ // round beneath the content, ascend in the right outside gutter, then turn
+ // gently inward to the flower above the picture.
+ const bottom=clamp(
+  Math.max(from.y+95,picture.bottom+40),
+  from.y+85,
+  section.bottom-root.top-52
+ );
+ const farLeft=Math.max(28,Math.min(from.x-14,width*.048));
+ const rightLane=clamp(picture.right+Math.max(39,width*.038),
+   picture.right+24,width-31);
+ // Start with a downward sweep from the end of the main, monotone stem.
+ const prefix=organicCurve(points);
+ const firstU=
+  ' C '+round(from.x-7)+' '+round(from.y+48)
+  +' '+round(farLeft)+' '+round(bottom-69)
+  +' '+round(farLeft+50)+' '+round(bottom-18)
+  +' C '+round(farLeft+112)+' '+round(bottom+44)
+  +' '+round(rightLane-106)+' '+round(bottom+39)
+  +' '+round(rightLane-49)+' '+round(bottom-6)
+  +' C '+round(rightLane+12)+' '+round(bottom-56)
+  +' '+round(rightLane)+' '+round(flower.y+92)
+  +' '+round(rightLane-23)+' '+round(flower.y+56)
+  +' C '+round(rightLane-57)+' '+round(flower.y+12)
+  +' '+round(flower.x+82)+' '+round(flower.y+30)
+  +' '+round(flower.x)+' '+round(flower.y+91*flowerScale);
+ return{
+  d:prefix+firstU,prefix,width,height:root.height,sections,markers,
+  miniFlowers,flower,compact,heroStart,terminalStart:from.y,
+  uSpace:Math.max(240,Math.min(window.innerHeight*.67,root.height-from.y-window.innerHeight*.18))
+ };
 }
 
 /* Each motif consists of two elongated, closed leaf contours that emerge
@@ -219,12 +257,12 @@ function Flower({x,y,scale}){
 /* Browser measurements and SVG drawing are deliberately decoupled.
    Scroll events mutate stroke dash-offsets in requestAnimationFrame,
    without React state updates that could restart a long drawing. */
-export default function BotanicalThread({routeRef,reduced}){
+export default function BotanicalThread({pageRef,introRef,routeRef,reduced}){
  const [layout,setLayout]=useState(null);
- const svg=useRef(null),main=useRef(null),lengths=useRef({total:0,segments:[]});
+ const svg=useRef(null),main=useRef(null),prefixRef=useRef(null),lengths=useRef({total:0,segments:[]});
  const measure=useCallback(()=>{
-  if(!routeRef.current)return;
-  const next=buildRoute(routeRef.current);
+  if(!pageRef.current||!introRef.current||!routeRef.current)return;
+  const next=buildRoute(pageRef.current,routeRef.current,introRef.current);
   if(next)setLayout(previous=>{
    if(previous&&previous.d===next.d&&previous.height===next.height
       &&previous.width===next.width)return previous;
@@ -232,26 +270,32 @@ export default function BotanicalThread({routeRef,reduced}){
   });
  },[routeRef]);
  useEffect(()=>{
-  const route=routeRef.current;if(!route)return;
+  const route=routeRef.current,page=pageRef.current,intro=introRef.current;
+  if(!route||!page||!intro)return;
   let frame=0;
   const schedule=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(measure)};
   const observer=new ResizeObserver(schedule);
+  observer.observe(page);
   observer.observe(route);
+  observer.observe(intro);
+  const image=route.querySelector('#people .people-illustration img');
+  if(image)observer.observe(image);
   IDS.forEach(id=>{const el=route.querySelector('#'+id);if(el)observer.observe(el)});
   window.addEventListener('resize',schedule);
   document.fonts?.ready.then(schedule);
-  const images=[...route.querySelectorAll('img')];
+  const images=[...page.querySelectorAll('img')];
   images.forEach(img=>img.addEventListener('load',schedule));
   schedule();
   return()=>{cancelAnimationFrame(frame);observer.disconnect();
    window.removeEventListener('resize',schedule);
    images.forEach(img=>img.removeEventListener('load',schedule));
   };
- },[routeRef,measure]);
+ },[pageRef,introRef,routeRef,measure]);
  useLayoutEffect(()=>{
   const el=main.current,root=svg.current;
-  if(!el||!root||!layout)return;
+  if(!el||!root||!layout||!prefixRef.current)return;
   const total=el.getTotalLength();
+  const prefixLength=prefixRef.current.getTotalLength();
   const segments=[...root.querySelectorAll('path[data-stroke-start]')].map(node=>{
    const len=node.getTotalLength();
    node.style.strokeDasharray=String(len);
@@ -271,37 +315,48 @@ export default function BotanicalThread({routeRef,reduced}){
    // screen, its LONG horizontal arc can advance faster automatically,
    // while the surrounding content retains a normal scroll rhythm.
    const targetY=reduced?layout.height:
-     clamp(window.innerHeight*.69-routeRef.current.getBoundingClientRect().top,0,layout.height);
+     clamp(window.innerHeight*.78-pageRef.current.getBoundingClientRect().top,
+       0,layout.height);
    if(displayedY===null){
-     // Direct anchor navigation starts from the correct visible position.
      displayedY=targetY;
    }else if(reduced){
      displayedY=layout.height;
    }else{
      const elapsed=previousFrame?clamp((time-previousFrame)/1000,0,.05):1/60;
      const follow=1-Math.exp(-elapsed/.095);
-     displayedY+= (targetY-displayedY)*follow;
+     displayedY+=(targetY-displayedY)*follow;
      if(Math.abs(targetY-displayedY)<.65)displayedY=targetY;
    }
    previousFrame=time;
+   // The vertical stem is monotone-y. The final U necessarily curves back
+   // UP toward the flower, so its length is mapped to the remaining
+   // scroll range rather than using a wrong y-axis binary search.
    let drawn=total;
    if(!reduced){
-     let low=0,high=total;
+     const prefixTarget=Math.min(displayedY,layout.terminalStart);
+     let low=0,high=prefixLength;
      for(let i=0;i<19;i++){
        const mid=(low+high)*.5;
-       if(el.getPointAtLength(mid).y<displayedY)low=mid;else high=mid;
+       if(prefixRef.current.getPointAtLength(mid).y<prefixTarget)low=mid;
+       else high=mid;
      }
-     drawn=(low+high)*.5;
+     const prefixDrawn=(low+high)*.5;
+     const uProgress=clamp((displayedY-layout.terminalStart)/layout.uSpace);
+     drawn=prefixDrawn+(total-prefixLength)*ease(uProgress);
    }
    el.style.strokeDashoffset=String(Math.max(0,total-drawn));
    // Sprigs grow only once the MAIN drawn tip reaches their attachment;
    // slowing the vine therefore also slows its foliage and final bloom.
-   const drawnTipY=el.getPointAtLength(drawn).y;
+   const drawnTipY=prefixRef.current.getPointAtLength(
+      Math.min(prefixLength,drawn)).y;
+   const uProgress=reduced?1:clamp((displayedY-layout.terminalStart)/layout.uSpace);
    for(const entry of segments){
     const {node,len,group,start,end}=entry;
     const startY=Number(group.dataset.growY);
     const span=Number(group.dataset.growSpan);
-    const p=reduced?1:clamp((drawnTipY-startY)/span);
+    const p=group.classList.contains('big-botanical-bloom')
+      ?clamp((uProgress-.62)/.38)
+      :(reduced?1:clamp((drawnTipY-startY)/span));
     const fraction=ease((p-start)/Math.max(.02,end-start));
     const offset=len*(1-fraction);
     if(Math.abs((entry.lastOffset??-9999)-offset)<.025)continue;
@@ -309,8 +364,7 @@ export default function BotanicalThread({routeRef,reduced}){
     entry.lastOffset=offset;
    }
    if(center&&flower){
-    const p=reduced?1:clamp((drawnTipY-Number(flower.dataset.growY))/
-      Number(flower.dataset.growSpan));
+    const p=clamp((uProgress-.62)/.38);
     center.style.opacity=String(ease((p-.83)/.17));
    }
    root.dataset.scrollTip=String(Math.round(drawnTipY));
@@ -326,12 +380,14 @@ export default function BotanicalThread({routeRef,reduced}){
    window.removeEventListener('scroll',request);
    window.removeEventListener('resize',request);
   };
- },[layout,reduced,routeRef]);
+ },[layout,reduced,pageRef,routeRef]);
  if(!layout)return null;
  return <svg ref={svg} className="botanical-map"
   viewBox={'0 0 '+round(layout.width)+' '+round(layout.height)}
   preserveAspectRatio="none" role="presentation" aria-hidden="true"
-  data-layout-aware="true" data-side-switches={layout.compact?0:6}>
+  data-layout-aware="true" data-one-continuous-vine="true">
+   <path ref={prefixRef} d={layout.prefix} fill="none" stroke="none"
+     aria-hidden="true"/>
    <path ref={main} d={layout.d} className="botanical-main-path"/>
    {layout.markers.map((m,i)=><Sprig key={i} marker={m}/>)}
    {layout.miniFlowers.map((flower,i)=><SmallBloom key={i} {...flower}/>)}
