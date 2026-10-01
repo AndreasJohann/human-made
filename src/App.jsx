@@ -56,8 +56,9 @@ const heroProgress = el => {const r=el.getBoundingClientRect();return clamp(-r.t
 const storyProgress = el => {const r=el.getBoundingClientRect();return clamp((window.innerHeight*.13-r.top)/Math.max(1,r.height-window.innerHeight*.74))};
 function Easing(v){return v*v*(3-2*v)}
 
-function Intro({t,reduced,lang}){
-  const stage=useRef(null);
+function Intro({t,reduced,lang,stageRef}){
+  const localStage=useRef(null);
+  const stage=stageRef||localStage;
   const raw=useScrollProgress(stage,heroProgress);
   const p=reduced?1:raw;
   const shrink=Easing(clamp((p-.045)/.55));
@@ -77,18 +78,6 @@ function Intro({t,reduced,lang}){
         <h1 className="hero-wordmark" style={{opacity:initial,transform:'translate(-50%,-50%) scale('+(1-shrink*.17)+')'}}>HUMAN<br/>MADE</h1>
         {!reduced&&<span className="hero-scroll-cue" style={{opacity:initial}}>{t.discover} <span aria-hidden="true">↓</span></span>}
       </div>
-      {/* A short sprout visibly begins at the shrinking image's bottom edge.
-          The narrative's main living line continues immediately afterward. */}
-      <svg className="intro-vine-seed" viewBox="0 0 1000 1000"
-        preserveAspectRatio="none" aria-hidden="true"
-        style={{opacity:reduced?0:clamp((p-.62)/.16)}}>
-        <path d="M335 763 C327 790 304 806 277 811 S215 831 176 870 S98 934 61 1012"
-          className="intro-vine-stem"
-          style={{strokeDasharray:440,strokeDashoffset:440*(1-Easing(clamp((p-.62)/.32)))}}/>
-        <path d="M258 817 Q244 787 219 793 Q230 817 258 817 Z M258 817 Q240 800 220 794"
-          className="intro-vine-leaf"
-          style={{strokeDasharray:104,strokeDashoffset:104*(1-Easing(clamp((p-.77)/.19)))}}/>
-      </svg>
       <div className="intro-reveal" style={{opacity:reveal,transform:'translateY('+((1-reveal)*38)+'px)',pointerEvents:reveal>.85?'auto':'none'}}>
         <p className="eyebrow">{t.heroTag}</p><h2>{t.headline}</h2><p>{t.intro}</p>
         <div className="intro-buttons"><a className="btn solid" href="#idea">{t.explore}<span aria-hidden="true">↗</span></a><a className="text-link" href="#involved">{t.join} <span aria-hidden="true">→</span></a></div>
@@ -145,10 +134,8 @@ function LaterChapters({t,lang}){
 }
 const MemoJourney=React.memo(Journey);
 const MemoLaterChapters=React.memo(LaterChapters);
-function NarrativeRoute({t,lang,reduced}){
-  const route=useRef(null);
-  return <div ref={route} className="narrative-route">
-    <BotanicalThread routeRef={route} reduced={reduced}/>
+function NarrativeRoute({t,lang,routeRef}){
+  return <div ref={routeRef} className="narrative-route">
     <div className="narrative-content">
       <MemoJourney t={t}/>
       <MemoLaterChapters t={t} lang={lang}/>
@@ -156,6 +143,9 @@ function NarrativeRoute({t,lang,reduced}){
   </div>;
 }
 export default function App(){
+  const pageRef=useRef(null);
+  const introRef=useRef(null);
+  const routeRef=useRef(null);
   const [lang,setLang]=useState('en');
   const [headerVisible,setHeaderVisible]=useState(false);
   const reduced=useReducedMotion();const t=copy[lang];
@@ -164,5 +154,10 @@ export default function App(){
     update();window.addEventListener('scroll',update,{passive:true});return()=>window.removeEventListener('scroll',update)
   },[reduced]);
   useEffect(()=>{document.documentElement.lang=lang},[lang]);
-  return <><a className="skip-link" href="#idea">Skip to content</a><Header t={t} lang={lang} setLang={setLang} visible={headerVisible}/><main><Intro t={t} reduced={reduced} lang={lang}/><NarrativeRoute t={t} lang={lang} reduced={reduced}/></main><footer><div className="content-width"><b>HUMAN MADE</b><p>{t.footer}</p><a href="#home">↑</a></div></footer></>
+  return <><a className="skip-link" href="#idea">Skip to content</a><Header t={t} lang={lang} setLang={setLang} visible={headerVisible}/><main ref={pageRef} className="living-page">
+    <Intro t={t} reduced={reduced} lang={lang} stageRef={introRef}/>
+    <NarrativeRoute t={t} lang={lang} routeRef={routeRef}/>
+    <BotanicalThread pageRef={pageRef} introRef={introRef}
+      routeRef={routeRef} reduced={reduced}/>
+   </main><footer><div className="content-width"><b>HUMAN MADE</b><p>{t.footer}</p><a href="#home">↑</a></div></footer></>
 }
