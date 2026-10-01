@@ -147,9 +147,8 @@ const MemoJourney=React.memo(Journey);
 const MemoLaterChapters=React.memo(LaterChapters);
 function NarrativeRoute({t,lang,reduced}){
   const route=useRef(null);
-  const progress=useScrollProgress(route,storyProgress);
   return <div ref={route} className="narrative-route">
-    <BotanicalThread routeRef={route} progress={progress} reduced={reduced}/>
+    <BotanicalThread routeRef={route} reduced={reduced}/>
     <div className="narrative-content">
       <MemoJourney t={t}/>
       <MemoLaterChapters t={t} lang={lang}/>
