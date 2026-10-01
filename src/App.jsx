@@ -1,3 +1,4 @@
+import BotanicalThread from './BotanicalThread.jsx';
 import React, {useEffect, useRef, useState} from 'react';
 
 const HERO = '/assets/Meerblick.jpg';
@@ -52,7 +53,7 @@ function useScrollProgress(ref,calculate){
   return progress;
 }
 const heroProgress = el => {const r=el.getBoundingClientRect();return clamp(-r.top/Math.max(1,r.height-window.innerHeight))};
-const storyProgress = el => {const r=el.getBoundingClientRect();return clamp((window.innerHeight*.65-r.top)/Math.max(1,r.height-window.innerHeight*.35))};
+const storyProgress = el => {const r=el.getBoundingClientRect();return clamp((window.innerHeight*.13-r.top)/Math.max(1,r.height-window.innerHeight*.74))};
 function Easing(v){return v*v*(3-2*v)}
 
 function Intro({t,reduced,lang}){
@@ -85,19 +86,6 @@ function Intro({t,reduced,lang}){
     </div>
   </section>
 }
-function BotanicalThread({progress,reduced}){
-  const path=useRef(null);const [length,setLength]=useState(1550);
-  useEffect(()=>{if(path.current)setLength(path.current.getTotalLength())},[]);
-  return <svg className="botanical-thread" viewBox="0 0 112 1580" preserveAspectRatio="none" aria-hidden="true">
-    <path ref={path} className="thread-stem" d="M55 0 C41 114 81 190 54 300 S43 450 63 530 S73 672 50 790 S79 940 56 1074 S42 1222 66 1330 S51 1498 61 1580" style={{strokeDasharray:length,strokeDashoffset:reduced?0:length*(1-progress)}}/>
-    {[
-      {at:.15,d:'M57 277 C40 255 21 254 13 242 C20 267 40 284 57 277 M57 277 L15 244'},
-      {at:.38,d:'M67 603 C87 575 99 578 105 563 C105 589 89 608 67 603 M67 603 L102 566'},
-      {at:.63,d:'M57 990 C36 967 22 969 12 952 C16 981 39 1000 57 990 M57 990 L15 957'},
-      {at:.84,d:'M59 1308 C78 1290 94 1296 103 1281 C103 1307 80 1321 59 1308 M59 1308 L101 1284'}
-    ].map((leaf,i)=><path key={i} className="thread-leaf" d={leaf.d} style={{opacity:(reduced||progress>leaf.at)?0.83:0,transform:'scale('+(reduced?1:progress>leaf.at?1:.85)+')'}}/> )}
-  </svg>
-}
 function Header({t,lang,setLang,visible}){
   const [open,setOpen]=useState(false);
   return <header className={'site-header'+(visible?' is-visible':'')}><a className="site-brand" href="#home" aria-label="Human Made home"><span className="brand-leaf" aria-hidden="true">⌁</span> HUMAN MADE</a><nav className={'main-nav'+(open?' open':'')} aria-label="Primary navigation">
@@ -109,10 +97,8 @@ function Reveal({children,className=''}) {
   useEffect(()=>{const ob=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){setVisible(true);ob.unobserve(e.target)}}),{threshold:.12});if(ref.current)ob.observe(ref.current);return()=>ob.disconnect()},[]);
   return <div ref={ref} className={'reveal '+(visible?'on ':'')+className}>{children}</div>
 }
-function Journey({t,reduced}){
-  const story=useRef(null);const progress=useScrollProgress(story,storyProgress);
-  return <div ref={story} className="journey" id="story">
-    <BotanicalThread progress={progress} reduced={reduced}/>
+function Journey({t}){
+  return <div className="journey" id="story">
     <section className="chapter idea-chapter" id="idea"><div className="chapter-inner grid-pair">
       <Reveal className="copy"><span className="eyebrow">{t.ideaEye}</span><h2>{t.ideaTitle}</h2><p className="standfirst">{t.ideaIntro}</p><p>{t.ideaBody}</p><blockquote>{t.ideaQuote}</blockquote></Reveal>
       <Reveal className="illustration-frame"><img src={ASSET+'Vision.png'} alt="Axonometric hand drawing of the Human Made communal building concept"/><small>HUMAN MADE / CONCEPT DRAWING</small></Reveal>
@@ -145,6 +131,17 @@ function LaterChapters({t,lang}){
     <section className="later-section people-section" id="people"><div className="content-width people-split"><Reveal><span className="eyebrow">{t.peopleEye}</span><h2>{t.peopleTitle}</h2><p className="standfirst">{t.peopleBody}</p><a className="text-link" href="mailto:info@studioless-arc.com">info@studioless-arc.com ↗</a></Reveal><Reveal className="people-illustration"><img src={ASSET+'Icon%20Mensch.png'} alt="Hand-drawn people, a Human Made motif"/></Reveal></div></section>
   </>
 }
+function NarrativeRoute({t,lang,reduced}){
+  const route=useRef(null);
+  const progress=useScrollProgress(route,storyProgress);
+  return <div ref={route} className="narrative-route">
+    <BotanicalThread progress={progress} reduced={reduced}/>
+    <div className="narrative-content">
+      <Journey t={t}/>
+      <LaterChapters t={t} lang={lang}/>
+    </div>
+  </div>;
+}
 export default function App(){
   const [lang,setLang]=useState('en');
   const [headerVisible,setHeaderVisible]=useState(false);
@@ -154,5 +151,5 @@ export default function App(){
     update();window.addEventListener('scroll',update,{passive:true});return()=>window.removeEventListener('scroll',update)
   },[reduced]);
   useEffect(()=>{document.documentElement.lang=lang},[lang]);
-  return <><a className="skip-link" href="#idea">Skip to content</a><Header t={t} lang={lang} setLang={setLang} visible={headerVisible}/><main><Intro t={t} reduced={reduced} lang={lang}/><Journey t={t} reduced={reduced}/><LaterChapters t={t} lang={lang}/></main><footer><div className="content-width"><b>HUMAN MADE</b><p>{t.footer}</p><a href="#home">↑</a></div></footer></>
+  return <><a className="skip-link" href="#idea">Skip to content</a><Header t={t} lang={lang} setLang={setLang} visible={headerVisible}/><main><Intro t={t} reduced={reduced} lang={lang}/><NarrativeRoute t={t} lang={lang} reduced={reduced}/></main><footer><div className="content-width"><b>HUMAN MADE</b><p>{t.footer}</p><a href="#home">↑</a></div></footer></>
 }
