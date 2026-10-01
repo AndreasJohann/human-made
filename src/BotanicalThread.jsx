@@ -100,13 +100,17 @@ function buildRoute(route){
     const wave=Math.sin(t*Math.PI*3.4)*Math.sin(t*Math.PI)*sway;
     return main+wave;
    };
+   // A second, smaller vertical wave removes the ruler-straight
+   // diagonal without violating monotone-y progress needed on scroll-up.
+   const crossY=t=>start+gap*t+
+     Math.sin(t*Math.PI*2.4)*Math.sin(t*Math.PI)*Math.min(49,gap*.075);
    for(let step=1;step<=15;step++){
     const t=step/15;
-    add({x:crossX(t),y:start+gap*t});
+    add({x:crossX(t),y:crossY(t)});
    }
    [0.18,.31,.45,.57,.70,.83].forEach((t,i)=>{
     if(compact&&i%2) return;
-    markers.push({x:crossX(t),y:start+gap*t,dir:i%2?-1:1,
+    markers.push({x:crossX(t),y:crossY(t),dir:i%2?-1:1,
       scale:compact?.46:.83,variant:(index+i+1)%3});
    });
   }
