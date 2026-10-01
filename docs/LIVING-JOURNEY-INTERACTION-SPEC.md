@@ -16,19 +16,19 @@ This document describes the design contract for the **implemented feature branch
 - Render **one** continuous SVG path spanning the narrative sections.
 - Measure the actual bounding boxes and effective vertical padding of: `#idea`, `#foundations`, `#project`, `#indonesia`, `#road`, `#involved` and `#people`.
 - On desktop, route the plant through reserved *left*, *right*, *left*, *right*, *left*, *right*, *left* outside gutters.
-- Use pronounced, irregular curves and small organic offshoots within a chapter; reserve extra visual whitespace between sections and switch sides **only there**, using smooth two-axis botanical waves. **All adjoining spline segments share the same tangent slope**, removing kinks at sampled points. Do not cross text, cards or photographs.
+- Use **one large, softly rounded botanical bow** along each chapter and **one smooth cross-page arc** between sections. Crossings must fit within the sections' existing upper/lower padding; **never add blank interstitial screens or extra margins for the plant**. All spline segments share the same tangent slope. The main content stays central, and the plant must not cross text, cards or photographs.
 - On narrow screens, avoid page-wide crossings altogether: use a gently winding line in a reserved narrow left gutter. Content must remain readable.
 - Recalculate on resize, font load, and image load; changes in text length and EN/DE localization should not break the geometry.
 
 ## 4. Scroll actually draws the line
 - Calculate the drawing tip from the browser viewport and the actual narrative bounding box on each scroll frame, **without rerendering React**.
 - Draw the existing path up to the height reached by the scrolling viewport, including its full horizontal distance. Use a path-length binary search to avoid a pause or jump at left/right transitions.
-- Reverse the drawing naturally on upward scroll. Limit the drawing speed to approximately **1,040 SVG path-length pixels per second**, add gentle scroll-following damping (approximately **340 ms**) and use a tip around **53% of the viewport height** so the plant grows visibly *with* the reader rather than racing ahead. Branches and the flower follow the actual rendered main tip, not the raw scroll target. No fixed-position botanical overlay or time-only animation.
+- Reverse the drawing naturally on upward scroll. Smooth the **vertical scroll-tip position** (approximately 95 ms) instead of throttling drawn path length; this keeps the main line close to the reader and **automatically makes long horizontal crossings draw faster**. Place the tip around 69% of the viewport height. Branches and the flower follow the actually drawn main tip, not the raw scroll target. No fixed-position botanical overlay or time-only animation.
 
 ## 5. Recognizable hand-drawn leaves
 - Place repeated but deliberately staggered pairs of narrow leaves along each chapter and transition; scale their density down on mobile. Position motifs close to the measured curve, rather than the page edge.
 - Draw each twig, leaf outline and inner vein sequentially using SVG dash-offset animation coupled to the scrolling tip.
-- Keep the line fine and organic: dark forest green, approximately **1.925 px** for the main desktop route (1.6 px on mobile), with all twig, leaf, vein and petal outlines similarly halved. The transition areas have slightly more whitespace to accommodate rounder growth. The design follows the user's annotated curve as a qualitative reference, not an exact tracing.
+- Keep the line fine and organic: dark forest green, approximately **1.925 px** for the main desktop route (1.6 px on mobile), with all twig, leaf, vein and petal outlines similarly halved. Transitions reuse the existing chapter padding without introducing any additional space. The design follows the user's annotated curve as a qualitative reference, not an exact tracing.
 - Use extra leaves without filling the page with solid foliage or overlapping the content.
 
 ## 6. Bloom at Lea & Jessi
@@ -42,7 +42,7 @@ This document describes the design contract for the **implemented feature branch
 - Both languages: All text and images remain unobscured.
 - Mobile: No page-wide crossings, no horizontal overflow, legible single-column reading.
 - Scroll downward/upward, repeatedly and slowly: continuous frame-accurate growth and reversal of the main path, all leaf groups and the flower; no gaps or freezes on the large side-switching arcs.
-- Browser layout: verify the line stays in outer gutters around real content blocks and crosses only inside the added empty inter-section bands.
+- Browser layout: verify the line stays in outer gutters around real content blocks, crosses only within normal chapter padding, and does not insert extra scrolling screens.
 - End of page: the full-sized central flower finishes opening before scroll reaches the footer.
 - Reduced motion: Static readable narrative, fully drawn botanical motif, no forced zoom animation.
 - Five Get Involved choices and their editable prefilled contact message remain working.
