@@ -1,92 +1,178 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
 
-/* Hand-drawn, scroll-grown plant: the long stem stretches with the page;
-   each twig and leaf sits in its own proportional SVG so leaves stay delicate. */
-const clamp = x => Math.max(0, Math.min(1, x));
-const ease = x => { const v=clamp(x); return v*v*(3-2*v); };
-const SPRIGS = [
-  { at:.075, mirror:false }, { at:.185, mirror:true },
-  { at:.305, mirror:false }, { at:.425, mirror:true },
-  { at:.545, mirror:false }, { at:.665, mirror:true },
-  { at:.785, mirror:false }, { at:.895, mirror:true }
+/**
+ * Layout-aware living line for Human Made.
+ *
+ * The SVG occupies the entire narrative, NOT the viewport. The curve is
+ * rebuilt from measured section boundaries; inside each section it stays
+ * in the reserved outer gutter. Left/right transitions happen ONLY in
+ * the empty vertical padding between adjacent sections.
+ * A position-based reveal draws continuously at the scroll position;
+ * the leaves and the final flower bloom as the growing tip reaches them.
+ */
+const IDS=['idea','foundations','project','indonesia','road','involved','people'];
+const clamp=(v,min=0,max=1)=>Math.min(max,Math.max(min,v));
+const ease=v=>{v=clamp(v);return v*v*(3-2*v)};
+const LEAVES=[
+ {d:'M0 0 C-11 -14 -22 -22 -31 -21 C-28 -5 -13 2 0 0 Z',vein:'M0 0 Q-16 -12 -30 -20'},
+ {d:'M0 0 C11 -20 20 -26 31 -24 C25 -8 13 0 0 0 Z',vein:'M0 0 Q17 -16 30 -23'},
+ {d:'M0 0 C-15 -10 -22 -9 -30 -7 C-22 5 -8 8 0 0 Z',vein:'M0 0 Q-13 -3 -29 -7'}
 ];
-const MOTIFS = [
- {branches:[
-   'M60 108 C47 94 39 76 37 58 S27 35 25 26',
-   'M43 78 C57 68 72 56 85 34',
-   'M51 93 C38 91 30 87 21 78'],
-  leaves:[
-   ['M25 26 Q9 18 14 4 Q28 11 25 26 Z','M25 26 Q22 15 15 5'],
-   ['M37 58 Q17 56 17 42 Q31 43 37 58 Z','M37 58 Q27 49 18 43'],
-   ['M85 34 Q90 15 108 13 Q104 31 85 34 Z','M85 34 Q97 24 107 14'],
-   ['M69 51 Q69 33 84 25 Q86 42 69 51 Z','M69 51 Q78 36 84 26'],
-   ['M21 78 Q8 65 10 53 Q21 59 21 78 Z','M21 78 Q16 65 11 55']]},
- {branches:[
-   'M60 108 C69 91 78 77 77 56 S80 36 90 21',
-   'M75 64 C55 58 45 51 37 35',
-   'M67 88 C86 78 100 70 109 55'],
-  leaves:[
-   ['M90 21 Q91 6 108 7 Q107 23 90 21 Z','M90 21 Q98 13 107 8'],
-   ['M77 56 Q66 41 76 30 Q86 40 77 56 Z','M77 56 Q77 43 76 31'],
-   ['M37 35 Q18 34 14 19 Q32 22 37 35 Z','M37 35 Q24 26 15 20'],
-   ['M51 52 Q40 40 47 24 Q57 37 51 52 Z','M51 52 Q50 38 47 25'],
-   ['M109 55 Q105 37 117 27 Q123 44 109 55 Z','M109 55 Q118 42 117 28']]},
- {branches:[
-   'M60 108 C57 88 48 73 53 58 S67 34 70 14',
-   'M54 71 C36 66 23 61 17 47',
-   'M57 90 C77 86 89 76 97 65'],
-  leaves:[
-   ['M70 14 Q62 4 69 0 Q80 4 70 14 Z','M70 14 Q71 7 69 1'],
-   ['M53 58 Q38 46 43 31 Q55 39 53 58 Z','M53 58 Q50 43 44 32'],
-   ['M17 47 Q5 39 10 25 Q22 34 17 47 Z','M17 47 Q14 32 11 26'],
-   ['M34 63 Q20 67 10 58 Q23 50 34 63 Z','M34 63 Q19 59 11 58'],
-   ['M97 65 Q97 46 113 41 Q111 60 97 65 Z','M97 65 Q105 54 112 42']]}
-];
-function DrawnStroke({d, progress, className}) {
-  const ref = useRef(null);
-  const [length, setLength] = useState(200);
-  useEffect(() => {
-    if (ref.current) setLength(ref.current.getTotalLength());
-  }, [d]);
-  return <path ref={ref} d={d} className={className}
-    style={{strokeDasharray:length, strokeDashoffset:length*(1-ease(progress))}} />;
+function strokeStyle(total,progress){return{strokeDasharray:total,strokeDashoffset:total*(1-ease(progress))};}
+function FineStroke({d,progress,kind='leaf'}){
+ const ref=useRef(null);const [length,setLength]=useState(92);
+ useEffect(()=>{if(ref.current)setLength(ref.current.getTotalLength())},[d]);
+ return <path ref={ref} d={d} className={'drawn-'+kind} style={strokeStyle(length,progress)}/>;
 }
-function Sprig({at,mirror,kind,progress,reduced}) {
-  const motif=MOTIFS[kind];
-  const grown=reduced || progress>at+.071;
-  const branch=reduced?1:clamp((progress-at)/.048);
-  return <div className={'botanical-sprig'+(grown?' grown':'')}
-    style={{top:(at*100)+'%'}}>
-    <svg viewBox="0 0 140 128" aria-hidden="true">
-      <g transform={mirror?'translate(120 0) scale(-1 1)':undefined}>
-        {motif.branches.map((d,i)=><DrawnStroke key={i} d={d}
-          className="sprig-twig"
-          progress={reduced?1:clamp((branch-i*.14)/(.8-i*.08))}/>)}
-        {motif.leaves.map(([outline,vein],i)=>{
-          const g=reduced?1:clamp((progress-at-.02-i*.007)/.054);
-          return <g key={i}>
-            <DrawnStroke d={outline} className="sprig-leaf" progress={g}/>
-            <DrawnStroke d={vein} className="sprig-vein"
-              progress={reduced?1:clamp((g-.55)/.45)}/>
-          </g>;
-        })}
-      </g>
-    </svg>
-  </div>;
+function LeafCluster({x,y,side,progress,scale=.9,variant=0}){
+ const data=LEAVES[variant%LEAVES.length];
+ const unfurl=clamp(progress);
+ // A small fork grows first. The single, veined outline unfolds
+ // immediately afterward, rather than appearing as a complete symbol.
+ const mirror=side==='right'?-1:1;
+ return <g transform={'translate('+x+' '+y+') scale('+(mirror*scale)+' '+scale+')'}>
+   <FineStroke d="M0 0 C-7 -7 -13 -16 -16 -29" progress={clamp(unfurl/.54)} kind="twig"/>
+   <g transform="translate(-16 -29) rotate(-16)">
+     <FineStroke d={data.d} progress={clamp((unfurl-.20)/.65)}/>
+     <FineStroke d={data.vein} progress={clamp((unfurl-.63)/.37)} kind="vein"/>
+   </g>
+ </g>;
 }
-export default function BotanicalThread({progress,reduced}) {
-  const path=useRef(null);
-  const [length,setLength]=useState(1550);
-  useEffect(()=>{if(path.current)setLength(path.current.getTotalLength())},[]);
-  return <div className="botanical-thread" aria-hidden="true" data-growth={Math.round(progress*100)}>
-    <svg className="botanical-spine" viewBox="0 0 140 1200"
-      preserveAspectRatio="none" aria-hidden="true">
-      <path ref={path} className="thread-stem"
-        d="M60 -4 C72 102 43 185 57 278 S76 422 58 530 S41 682 61 777 S81 933 57 1036 S48 1140 60 1205"
-        style={{strokeDasharray:length,
-          strokeDashoffset:reduced?0:length*(1-ease(progress))}}/>
-    </svg>
-    {SPRIGS.map(({at,mirror},i)=><Sprig key={at} at={at}
-      mirror={mirror} kind={i%3} progress={progress} reduced={reduced}/>)}
-  </div>;
+const PETALS=[0,60,120,180,240,300];
+function Bloom({x,y,progress}){
+ const p=clamp(progress);
+ return <g className="final-bloom" transform={'translate('+x+' '+y+')'}>
+   <FineStroke d="M0 45 C-3 24 -6 12 0 0" progress={clamp(p/.27)} kind="twig"/>
+   <g>
+     {PETALS.map((angle,i)=><g key={angle} transform={'rotate('+angle+' 0 -5)'}>
+       <FineStroke d="M0 -5 C-11 -13 -11 -30 0 -37 C11 -28 11 -13 0 -5" progress={clamp((p-.21-i*.065)/.4)} kind="petal"/>
+       <FineStroke d="M0 -7 L0 -24" progress={clamp((p-.55-i*.035)/.4)} kind="vein"/>
+     </g>)}
+     <circle cx="0" cy="-5" r={3.5*ease((p-.72)/.25)} className="flower-center"/>
+   </g>
+ </g>;
+}
+function calculateLayout(route){
+ const box=route.getBoundingClientRect(),width=box.width;
+ const compact=window.innerWidth<800;
+ const left=compact?Math.max(29,Math.min(44,width*.085)):
+    Math.max(56,(width-1280)/2+60);
+ const right=width-left;
+ const geometry=IDS.map((id,index)=>{
+   const node=route.querySelector('#'+id);
+   if(!node)return null;
+   const r=node.getBoundingClientRect();
+   const cs=getComputedStyle(node);
+   const pt=parseFloat(cs.paddingTop)||96;
+   const pb=parseFloat(cs.paddingBottom)||96;
+   const top=r.top-box.top,bottom=r.bottom-box.top;
+   const side=compact?'left':index%2===0?'left':'right';
+   // Both entry and exit are in the EMPTY PADDING of the section.
+   return{id,top,bottom,entry:top+Math.min(73,pt*.42),
+     exit:bottom-Math.min(82,pb*.42),side,x:side==='left'?left:right};
+ }).filter(Boolean);
+ if(!geometry.length)return null;
+ let d='M '+(left+7).toFixed(1)+' 0';
+ // Curved handoff from the now-small hero image to the first chapter.
+ d+=' C '+(left+16)+' 38 '+(left-8)+' 57 '+left+' '+geometry[0].entry.toFixed(1);
+ const leaves=[];
+ geometry.forEach((section,index)=>{
+   const {x,entry,exit,side}=section;
+   const height=Math.max(30,exit-entry);
+   const sway=compact?10:17;
+   // Organic but constrained to the EMPTY LEFT/RIGHT GUTTER.
+   d+=' C '+(x+(side==='left'?sway:-sway)).toFixed(1)+' '+(entry+height*.23).toFixed(1)
+      +' '+(x+(side==='left'?-sway:sway)).toFixed(1)+' '+(entry+height*.74).toFixed(1)
+      +' '+x.toFixed(1)+' '+exit.toFixed(1);
+   const locations=index===0?[.19,.56]:index===6?[.25]:index%2===0?[.38,.79]:[.49];
+   locations.forEach((t,i)=>{
+     leaves.push({y:entry+height*t,x:x+(i%2===0?4:-5),side,variant:(index+i)%3,scale:compact?.64:.87});
+   });
+   const next=geometry[index+1];
+   if(next){
+     const gap=Math.max(12,next.entry-exit);
+     if(compact){
+       const swing=(index%2?-13:13);
+       // Retain winding movement on mobile, where crossing the page
+       // would otherwise obscure the single-column copy.
+       d+=' C '+(x+swing)+' '+(exit+gap*.3).toFixed(1)
+         +' '+(x-swing)+' '+(next.entry-gap*.28).toFixed(1)
+         +' '+next.x+' '+next.entry.toFixed(1);
+     }else{
+       // CROSS SIDE ONLY through the blank inter-chapter whitespace.
+       // The two control points introduce a slow, asymmetric S-turn.
+       const bend=(next.x-x)*.29;
+       d+=' C '+(x+bend*.23).toFixed(1)+' '+(exit+gap*.55).toFixed(1)
+        +' '+(next.x-bend*.9).toFixed(1)+' '+(next.entry-gap*.58).toFixed(1)
+        +' '+next.x.toFixed(1)+' '+next.entry.toFixed(1);
+     }
+   }
+ });
+ const last=geometry[geometry.length-1];
+ const flower={x:last.x,y:last.exit-1};
+ // Finish by running into the flower, not abruptly ending at a border.
+ d+=' C '+(last.x+6)+' '+(last.exit+12)
+  +' '+(flower.x-5)+' '+(flower.y+39)
+  +' '+flower.x+' '+(flower.y+45);
+ return{d,width,height:box.height,leaves,flower,compact,sections:geometry};
+}
+export default function BotanicalThread({routeRef,progress,reduced}){
+ const [layout,setLayout]=useState(null);
+ const [length,setLength]=useState(2000);
+ const path=useRef(null);
+ const compute=useCallback(()=>{
+   const route=routeRef.current;if(!route)return;
+   setLayout(calculateLayout(route));
+ },[routeRef]);
+ useEffect(()=>{
+   let raf=0;
+   const schedule=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(compute)};
+   const route=routeRef.current;
+   if(!route)return;
+   const resize=new ResizeObserver(schedule);
+   resize.observe(route);
+   IDS.forEach(id=>{const s=route.querySelector('#'+id);if(s)resize.observe(s)});
+   document.fonts?.ready.then(schedule);
+   route.querySelectorAll('img').forEach(img=>img.addEventListener('load',schedule));
+   window.addEventListener('resize',schedule);
+   schedule();
+   return()=>{
+     cancelAnimationFrame(raf);resize.disconnect();
+     window.removeEventListener('resize',schedule);
+     route.querySelectorAll('img').forEach(img=>img.removeEventListener('load',schedule));
+   };
+ },[compute,routeRef]);
+ useEffect(()=>{if(path.current){setLength(path.current.getTotalLength())}},[layout?.d]);
+ const totalY=layout?.height||1000;
+ const vh=typeof window!=='undefined'?window.innerHeight:800;
+ // Route's scroll fraction is converted back to local viewport position:
+ // no artificial pauses when the curve travels horizontally between sides.
+ const tipY=reduced?totalY:clamp(progress*(totalY-vh*.74)+vh*.53,0,totalY);
+ const [visibleLength,setVisibleLength]=useState(0);
+ useEffect(()=>{
+   if(!path.current||!layout)return;
+   if(reduced){setVisibleLength(length);return}
+   let low=0,high=length;
+   // Path advances monotonically down the page; find the exact
+   // length of the position presently reached by the scrolling viewport.
+   for(let i=0;i<17;i++){
+     const mid=(low+high)/2;
+     const point=path.current.getPointAtLength(mid);
+     if(point.y<tipY)low=mid;else high=mid;
+   }
+   setVisibleLength((low+high)/2);
+ },[tipY,length,layout?.d,reduced]);
+ if(!layout)return null;
+ return <svg className="botanical-map"
+    viewBox={'0 0 '+layout.width+' '+Math.max(1,layout.height)}
+    preserveAspectRatio="none" role="presentation" aria-hidden="true"
+    data-vine-visible={Math.round(visibleLength/Math.max(1,length)*100)}
+    data-vine-crossings={layout.compact?0:layout.sections.length-1}>
+   <path ref={path} className="botanical-main-path" d={layout.d}
+      style={{strokeDasharray:length,strokeDashoffset:reduced?0:Math.max(0,length-visibleLength)}}/>
+   {layout.leaves.map((leaf,i)=><LeafCluster key={i}
+      {...leaf} progress={reduced?1:clamp((tipY-leaf.y)/115)}/>)}
+   <Bloom {...layout.flower}
+      progress={reduced?1:clamp((tipY-(layout.flower.y-170))/220)}/>
+ </svg>;
 }
