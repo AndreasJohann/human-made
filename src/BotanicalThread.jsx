@@ -41,8 +41,15 @@ function buildRoute(route){
   const innerCSS=inner?getComputedStyle(inner):null;
   const contentLeft=box.left-root.left+(parseFloat(innerCSS?.paddingLeft)||0);
   const contentRight=box.right-root.left-(parseFloat(innerCSS?.paddingRight)||0);
-  const leftLane=clamp(contentLeft*.49,compact?32:63,Math.max(36,contentLeft-80));
-  const rightLane=Math.min(width-39,contentRight+Math.max(30,(width-contentRight)*.53));
+  // Stay close enough to the *content* to read as an illustration of
+  // each block, not a fixed edge decoration, while leaving leaf room.
+  const leftSpace=contentLeft,rightSpace=width-contentRight;
+  const leftOffset=Math.min(122,Math.max(compact?35:78,leftSpace*.44));
+  const rightOffset=Math.min(122,Math.max(78,rightSpace*.44));
+  const leftLane=compact
+    ? clamp(contentLeft-leftOffset,29,Math.max(37,contentLeft-32))
+    : clamp(contentLeft-leftOffset,48,contentLeft-50);
+  const rightLane=clamp(contentRight+rightOffset,contentRight+48,width-46);
   const top=r.top-root.top,bottom=r.bottom-root.top;
   const padTop=parseFloat(style.paddingTop)||120,padBottom=parseFloat(style.paddingBottom)||120;
   const side=compact?'left':index%2?'right':'left';
