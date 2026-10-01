@@ -131,14 +131,16 @@ function LaterChapters({t,lang}){
     <section className="later-section people-section" id="people"><div className="content-width people-split"><Reveal><span className="eyebrow">{t.peopleEye}</span><h2>{t.peopleTitle}</h2><p className="standfirst">{t.peopleBody}</p><a className="text-link" href="mailto:info@studioless-arc.com">info@studioless-arc.com ↗</a></Reveal><Reveal className="people-illustration"><img src={ASSET+'Icon%20Mensch.png'} alt="Hand-drawn people, a Human Made motif"/></Reveal></div></section>
   </>
 }
+const MemoJourney=React.memo(Journey);
+const MemoLaterChapters=React.memo(LaterChapters);
 function NarrativeRoute({t,lang,reduced}){
   const route=useRef(null);
   const progress=useScrollProgress(route,storyProgress);
   return <div ref={route} className="narrative-route">
     <BotanicalThread progress={progress} reduced={reduced}/>
     <div className="narrative-content">
-      <Journey t={t}/>
-      <LaterChapters t={t} lang={lang}/>
+      <MemoJourney t={t}/>
+      <MemoLaterChapters t={t} lang={lang}/>
     </div>
   </div>;
 }

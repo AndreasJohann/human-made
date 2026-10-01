@@ -82,7 +82,7 @@ footer{background:var(--forest);color:#ebf0e7;padding:38px 0;font-size:.88rem}fo
 }
 .botanical-spine{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .thread-stem{
-  fill:none;stroke:#71866d;stroke-width:1.65;stroke-linecap:round;
+  fill:none;stroke:#597158;stroke-width:1.65;stroke-linecap:round;
   stroke-linejoin:round;vector-effect:non-scaling-stroke
 }
 .botanical-sprig{
@@ -94,9 +94,9 @@ footer{background:var(--forest);color:#ebf0e7;padding:38px 0;font-size:.88rem}fo
   fill:none;stroke-linecap:round;stroke-linejoin:round;
   vector-effect:non-scaling-stroke
 }
-.sprig-twig{stroke:#71866d;stroke-width:1.4}
-.sprig-leaf{stroke:#73876e;stroke-width:1.2}
-.sprig-vein{stroke:#82957e;stroke-width:.78}
+.sprig-twig{stroke:#597158;stroke-width:1.4}
+.sprig-leaf{stroke:#627960;stroke-width:1.2}
+.sprig-vein{stroke:#798d73;stroke-width:.78}
 .botanical-sprig.grown{animation:botanicalBreath 11s ease-in-out infinite alternate}
 @keyframes botanicalBreath{
   from{transform:rotate(-.35deg)}
