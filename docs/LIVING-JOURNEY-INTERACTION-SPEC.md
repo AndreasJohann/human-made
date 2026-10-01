@@ -1,6 +1,6 @@
 # Human Made — Living Journey (React interaction specification)
 
-This document describes the design contract for the **implemented feature branch** `feat/living-journey-react-preview`. The implementation is in `src/App.jsx` (hero + narrative composition), `src/BotanicalThread.jsx` (responsive layout-sensitive botanical route) and `src/styles.css` (reserved gutters and illustration styles). It is **not** a production release.
+This document describes the design contract for the **implemented feature branch** `feat/living-journey-react-preview`. The implementation is in `src/App.jsx` (hero + shared page, introductory and story refs), `src/BotanicalThread.jsx` (ONE page-spanning SVG path from the hero image through the ending), and `src/styles.css` (responsive content gutters and room above the final picture). It is **not** a production release.
 
 ## 1. Protect the full-screen hero
 - On entry show the project landscape full-viewport and only the large **HUMAN MADE** wordmark plus a small scroll instruction.
@@ -8,12 +8,12 @@ This document describes the design contract for the **implemented feature branch
 - Preserve the earlier React Hero geometry, timing and image; the botanical work must not replace or regress its zoom/shrink effect.
 
 ## 2. Introduce the living line at the hero
-- A short sprout appears at the *lower edge of the now-small landscape* late in the hero's scroll sequence. Its leaf grows after the stem.
-- The narrative's main line picks up at the left edge of the first content chapter, so the handoff appears as one visual storyline.
+- The single global SVG **starts exactly at the lower edge of the shrunken landscape** near the end of the hero transition. The initial sprig and all later growth are on the SAME geometric path.
+- The path runs directly from that hero-image edge into the first chapter's measured left-side gutter; there are no separate hero and narrative seed paths to align.
 - Never put a large plant illustration over the hero or explanatory text.
 
 ## 3. Layout-aware left-side growth (not an image overlay)
-- Render **one** continuous SVG path spanning the narrative sections.
+- Render **one** continuous SVG path spanning the shrunken hero image and all narrative sections.
 - Measure the actual bounding boxes and effective vertical padding of: `#idea`, `#foundations`, `#project`, `#indonesia`, `#road`, `#involved` and `#people`.
 - Keep the entire botanical thread in a single **left-side gutter** beside every narrative chapter, regardless of alternating text/image composition.
 - Within each chapter, let the thread describe only one slow, subtle rounded swing; use short, continuous curves inside existing padding to connect different measured left gutters. **No cross-page transitions, jagged S-forms or added vertical spacer sections.** Adjacent curves share their tangent direction. The content—not the ornament—remains central.
@@ -31,19 +31,20 @@ This document describes the design contract for the **implemented feature branch
 - Keep the line fine and organic: dark forest green, approximately **1.925 px** for the main desktop route (1.6 px on mobile), with all twig, leaf, vein and petal outlines similarly halved. Transitions reuse the existing chapter padding without introducing any additional space. The design follows the user's annotated curve as a qualitative reference, not an exact tracing.
 - Use extra leaves without filling the page with solid foliage or overlapping the content.
 
-## 6. Bloom at Lea & Jessi
-- End the route in the final `#people` section, leaving room below the biography content.
-- Bring the final branch into the **centre of the reserved whitespace beneath** Lea & Jessi and progressively draw a **substantially larger** eight-petal flower: stem, leaf, petal outlines, delicate inner strokes, and flower centre last.
-- Finish unfolding before the section disappears below the viewport; honour reduced-motion preferences.
+## 6. U-shaped finale and bloom at Lea & Jessi
+- In the final `#people` section, the ONE continuous line drops down the left side, draws a gentle **U below the biography/picture content**, rises **outside the right edge of the picture**, then curves inward into a large flower **directly ABOVE that picture**.
+- Measure the actual picture `getBoundingClientRect()`; position the bloom and loop responsively rather than at a hard-coded page/footer offset. Reserve vertical room over the picture itself, **not extra blank inter-chapter screens**.
+- The final loop naturally rises in screen coordinates. The scroll renderer therefore binary-searches the monotone main path and reveals the nonmonotone U via its own scroll-relative length; the whole illustration is still a single connected SVG path and grows/retracts in both scroll directions.
+- Draw the eight-petal flower from the terminal path at the exact base of its stem; its petals and centre bloom when the end of the U is reached. Honor reduced-motion preferences.
 
 ## Review checklist
-- Desktop: Hero retains the earlier strong, scroll-tied zoom and shows the first sprout as it nears completion.
+- Desktop: Hero retains the earlier strong, scroll-tied zoom. The same single SVG path physically originates on the final reduced image's lower edge and continues into the narrative without a second disconnected drawing.
 - Desktop: The vine stays in its reserved left gutter with only broad, gentle sways; transitions use existing padding, never the center of the content.
 - Both languages: All text and images remain unobscured.
 - Mobile: No page-wide crossings, no horizontal overflow, legible single-column reading.
 - Scroll downward/upward, repeatedly and slowly: continuous frame-accurate growth and reversal of the main path, leaf pairs, small blossoms and the large final flower; no jumps.
 - Browser layout: verify the left-side line, side-shoots and small blossoms stay outside content blocks and do not insert extra scrolling screens.
-- End of page: the full-sized central flower finishes opening before scroll reaches the footer.
+- End of page: a smooth U stays outside the Lea and Jessi content and returns to a large flower centered ABOVE their picture, with the base of its stem touching the main SVG path; flowering completes while the picture is still in view.
 - Reduced motion: Static readable narrative, fully drawn botanical motif, no forced zoom animation.
 - Five Get Involved choices and their editable prefilled contact message remain working.
 
