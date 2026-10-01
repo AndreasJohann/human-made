@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 
-const HERO = 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=2400&q=85';
+const HERO = '/assets/Meerblick.jpg';
 const COAST = HERO;
 const ASSET = '/assets/';
 const clamp = (v,min=0,max=1) => Math.min(max,Math.max(min,v));
