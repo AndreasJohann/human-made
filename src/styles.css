@@ -68,3 +68,63 @@ footer{background:var(--forest);color:#ebf0e7;padding:38px 0;font-size:.88rem}fo
 @media(max-width:850px){.main-nav{display:none;position:absolute;top:76px;left:0;right:0;background:#f4eee4;flex-direction:column;align-items:stretch;padding:24px}.main-nav.open{display:flex}.menu{display:block}.site-header{padding:8px 24px}.intro-stage{height:285svh}.intro-reveal{top:57%;left:7%;right:7%}.grid-pair,.split-editorial,.people-split{grid-template-columns:1fr}.chapter-inner{padding-left:92px;padding-right:28px}.botanical-thread{left:8px;width:62px}.foundation-grid{grid-template-columns:1fr}.foundation{display:grid;grid-template-columns:150px 1fr;gap:0 18px}.foundation-art{grid-column:1;grid-row:1/5}.foundation-number,.foundation h3,.foundation p{grid-column:2}.illustration-frame{min-height:380px}.reverse .copy{order:0}.reverse .illustration-frame{order:1}.timeline{grid-template-columns:repeat(2,1fr)}.timeline:before{display:none}.time-step{border-top:2px solid #b6c2ae}.ways{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:680px){h2{font-size:clamp(2rem,8vw,3rem)}.site-brand{font-size:.78rem}.header-cta{min-height:43px;padding:10px 12px;font-size:.7rem}.hero-wordmark{font-size:clamp(4.2rem,17vw,7rem)}.intro-stage{height:265svh}.intro-reveal{top:60%;left:6%;right:6%}.intro-reveal h2{font-size:clamp(1.7rem,6vw,2.6rem)}.intro-reveal p:not(.eyebrow){font-size:.95rem}.intro-buttons{margin-top:14px;gap:15px}.intro-facts{display:none}.chapter{padding:85px 0}.chapter-inner{padding-left:71px;padding-right:21px}.botanical-thread{left:2px;width:55px}.illustration-frame{min-height:280px}.foundation{grid-template-columns:110px 1fr}.foundation-art{height:130px}.timeline{grid-template-columns:1fr;gap:28px}.ways{grid-template-columns:1fr}.way{min-height:150px}.contact-form{grid-template-columns:1fr}footer>.content-width{flex-wrap:wrap}.hero-photo{object-position:52% center}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.intro-stage.reduced{height:auto}.intro-stage.reduced .intro-sticky{position:relative;height:100svh}.intro-stage.reduced .image-frame{top:0!important;right:0!important;bottom:0!important;left:0!important}.intro-stage.reduced .hero-wordmark{opacity:1!important}.intro-stage.reduced .intro-reveal{position:relative;left:auto;right:auto;top:auto;opacity:1!important;transform:none!important;padding:26px;background:var(--paper)}.intro-stage.reduced .intro-sticky{height:auto}.reveal{opacity:1;transform:none;transition:none}*{animation:none!important}}
+
+
+/* Botanical V2 — visible above section surfaces, below every text column.
+   Stem stretches with the complete narrative; proportional offshoot SVGs
+   preserve the fine hand-drawn shape without distorting the leaves. */
+.narrative-route{position:relative;isolation:isolate}
+.narrative-content{position:relative}
+.botanical-thread{
+  position:absolute;z-index:5;top:0;bottom:0;height:100%;
+  left:max(4px,calc((100vw - 1280px)/2 + 10px));
+  width:120px;opacity:.98;pointer-events:none;overflow:visible
+}
+.botanical-spine{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.thread-stem{
+  fill:none;stroke:#71866d;stroke-width:1.65;stroke-linecap:round;
+  stroke-linejoin:round;vector-effect:non-scaling-stroke
+}
+.botanical-sprig{
+  position:absolute;left:0;width:100%;aspect-ratio:140 / 128;
+  margin-top:-92px;pointer-events:none;transform-origin:43% 78%
+}
+.botanical-sprig svg{display:block;width:100%;height:auto;overflow:visible}
+.sprig-twig,.sprig-leaf,.sprig-vein{
+  fill:none;stroke-linecap:round;stroke-linejoin:round;
+  vector-effect:non-scaling-stroke
+}
+.sprig-twig{stroke:#71866d;stroke-width:1.4}
+.sprig-leaf{stroke:#73876e;stroke-width:1.2}
+.sprig-vein{stroke:#82957e;stroke-width:.78}
+.botanical-sprig.grown{animation:botanicalBreath 11s ease-in-out infinite alternate}
+@keyframes botanicalBreath{
+  from{transform:rotate(-.35deg)}
+  to{transform:rotate(.55deg)}
+}
+/* These layers explicitly keep the foliage in the dedicated left gutter.
+   The line itself never crosses headings, copy, photographs or buttons. */
+.chapter-inner{z-index:7}
+.later-section{position:relative}
+.later-section .content-width{
+  position:relative;z-index:7;
+  padding-left:clamp(140px,12vw,177px)
+}
+@media(max-width:1120px){
+  .botanical-thread{left:7px;width:78px}
+  .botanical-sprig{margin-top:-60px}
+  .later-section .content-width{padding-left:108px}
+}
+@media(max-width:850px){
+  .botanical-thread{left:3px;width:65px}
+  .botanical-sprig{margin-top:-50px}
+  .later-section .content-width{padding-left:91px}
+}
+@media(max-width:680px){
+  .botanical-thread{left:0;width:49px}
+  .botanical-sprig{margin-top:-38px}
+  .later-section .content-width{padding-left:71px;padding-right:20px}
+}
+@media(prefers-reduced-motion:reduce){
+  .botanical-sprig.grown{animation:none}
+}
