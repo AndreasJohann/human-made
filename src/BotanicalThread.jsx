@@ -3,8 +3,7 @@ import React,{useCallback,useEffect,useLayoutEffect,useRef,useState} from 'react
 /**
  * Human Made: botanical, layout-responsive scroll illustration.
  *
- * The vine follows real block boundaries. It alternates left/right outside
- * content, crosses only in deliberately reserved whitespace, and grows from
+ * The vine stays in one content-aware left gutter, gently sways, and grows from
  * the actual viewport position in both scroll directions. A large flower
  * blooms in the clear area beneath Lea & Jessi.
  */
@@ -53,103 +52,87 @@ function buildRoute(route){
   if(!node)return null;
   const r=node.getBoundingClientRect(),style=getComputedStyle(node);
   const inner=node.querySelector('.chapter-inner, .content-width');
-  const box=inner?.getBoundingClientRect()||r;
-  const innerCSS=inner?getComputedStyle(inner):null;
-  const contentLeft=box.left-root.left+(parseFloat(innerCSS?.paddingLeft)||0);
-  const contentRight=box.right-root.left-(parseFloat(innerCSS?.paddingRight)||0);
-  // Stay close enough to the *content* to read as an illustration of
-  // each block, not a fixed edge decoration, while leaving leaf room.
-  const leftSpace=contentLeft,rightSpace=width-contentRight;
-  const leftOffset=Math.min(122,Math.max(compact?35:78,leftSpace*.44));
-  const rightOffset=Math.min(122,Math.max(78,rightSpace*.44));
-  const leftLane=compact
-    ? clamp(contentLeft-leftOffset,29,Math.max(37,contentLeft-32))
-    : clamp(contentLeft-leftOffset,48,contentLeft-50);
-  const rightLane=clamp(contentRight+rightOffset,contentRight+48,width-46);
+  const innerBox=inner?.getBoundingClientRect()||r;
+  const innerStyle=inner?getComputedStyle(inner):null;
+  const contentLeft=innerBox.left-root.left+(parseFloat(innerStyle?.paddingLeft)||0);
   const top=r.top-root.top,bottom=r.bottom-root.top;
-  const padTop=parseFloat(style.paddingTop)||120,padBottom=parseFloat(style.paddingBottom)||120;
-  const side=compact?'left':index%2?'right':'left';
-  const lane=side==='left'?leftLane:rightLane;
-  // A measured safe radius; curves and leaf shoots remain in the reserved
-  // gutter instead of spilling into the copy column.
-  const outerSpace=side==='left'?contentLeft:width-contentRight;
-  const amplitude=compact?clamp(outerSpace*.10,5,10):clamp(outerSpace*.26,22,59);
-  const entry=top+padTop*.83;
-  const exit=index===6?Math.min(bottom-250,bottom-padBottom*.76):bottom-padBottom*.83;
-  return{id,node,index,top,bottom,entry,exit,side,lane,amplitude,contentLeft,contentRight};
+  const pt=parseFloat(style.paddingTop)||100,pb=parseFloat(style.paddingBottom)||100;
+  // The single, continuous path belongs to the same real content gutter
+  // in every chapter, not a line that crosses the reader's attention.
+  const lane=clamp(contentLeft-(compact?38:103),compact?34:55,contentLeft-(compact?29:65));
+  // Wide, slow lateral breathing: never more than half the remaining
+  // gutter, so flowers/leaves have room outside the copy.
+  const amplitude=compact?clamp(contentLeft*.1,4,9):clamp((contentLeft-lane)*.30,14,33);
+  const entry=top+pt*.75;
+  const exit=index===6?Math.min(bottom-250,bottom-pb*.76):bottom-pb*.72;
+  return{id,index,top,bottom,entry,exit,lane,amplitude,contentLeft};
  }).filter(Boolean);
  if(sections.length!==IDS.length)return null;
- const all=[],markers=[];
- const add=p=>{
-  if(!all.length||p.y>all[all.length-1].y+.09)all.push({x:p.x,y:p.y});
+ const points=[],markers=[],miniFlowers=[];
+ const add=(x,y)=>{
+  if(!points.length||y>points[points.length-1].y+.1)points.push({x,y});
  };
  const sectionX=(s,t)=>{
-  // One broad, rounded botanical bow per section. The envelope has zero
-  // derivative at both ends, so the cross-page bridge meets it smoothly.
-  // Tiny asymmetry keeps it organic without repeated narrow S-kinks.
+  // One broad botanical swing per chapter, with flat, continuous
+  // entry/exit tangents and slightly different sizes to avoid repetition.
   const envelope=Math.sin(Math.PI*t)**2;
-  const bow=envelope*(.73+.09*Math.sin(Math.PI*2*t+s.index*.42));
-  return s.lane+(s.side==='left'?1:-1)*s.amplitude*bow;
+  const direction=s.index%3===1?.18:-.75;
+  return s.lane+direction*s.amplitude*envelope*(.94+.06*Math.sin(Math.PI*t));
  };
- const first=sections[0],firstLane=first.lane;
- add({x:compact?firstLane:firstLane+21,y:0});
- add({x:firstLane+Math.min(28,first.amplitude),y:30});
- add({x:firstLane-Math.min(11,first.amplitude*.38),y:Math.max(48,first.entry*.49)});
- add({x:firstLane,y:first.entry});
+ const first=sections[0];
+ // The preceding hero sprout leads visually into this quiet left margin.
+ add(first.lane+9,0);
+ add(first.lane+4,Math.max(28,first.entry*.28));
+ add(first.lane-3,Math.max(48,first.entry*.58));
+ add(first.lane,first.entry);
  sections.forEach((s,index)=>{
-  const h=Math.max(80,s.exit-s.entry);
-  // Several irregular bends inside each gutter. Each location is spaced
-  // in y, never generating the near-straight line of the previous design.
-  for(let step=1;step<=19;step++){
-   const t=step/19;
-   add({x:sectionX(s,t),y:s.entry+h*t});
+  const h=Math.max(50,s.exit-s.entry);
+  // Dense *leaf growth*, not dense oscillations. The stem's shape is
+  // a single large arc, sampled for a continuously rounded spline.
+  for(let step=1;step<=18;step++){
+   const t=step/18;
+   add(sectionX(s,t),s.entry+h*t);
   }
-  const at=[.11,.24,.38,.52,.66,.80,.92];
-  at.forEach((t,i)=>{
-   if(compact&&i%2) return;
-   // A little sketch cluster has two recognizable leaves and visible veins.
-   // Across a page this creates a rich, but still fine, botanical drawing.
-   markers.push({x:sectionX(s,t),y:s.entry+h*t,dir:s.side==='left'?-1:1,
-    scale:compact?.52:.87,variant:(i+index)%3});
+  const leafPositions=[.09,.19,.30,.42,.54,.66,.78,.89];
+  leafPositions.forEach((t,i)=>{
+   if(compact&&i%3===1)return;
+   markers.push({x:sectionX(s,t),y:s.entry+h*t,
+     dir:-1,scale:compact?.5:.76,variant:(index+i)%3});
   });
+  // Occasionally a restrained hand-drawn blossom emerges from a twig.
+  // These are accents; the full eight-petal flower remains with Lea/Jessi.
+  if([1,3,5].includes(index)){
+   const t=index===1?.56:index===3?.46:.62;
+   miniFlowers.push({x:sectionX(s,t)-(compact?8:15),
+     y:s.entry+h*t,scale:compact?.40:.57});
+  }
   const next=sections[index+1];
   if(next){
-   const start=s.exit,end=next.entry,gap=end-start;
-   const x0=sectionX(s,1),x1=next.lane;
-   // Single generous side-to-side transition across EXISTING section
-   // padding: no extra blank interstitial screens and no zigzagging S-wave.
-   // The cubic easing leaves both ends vertically tangent to their lanes.
-   const crossX=t=>x0+(x1-x0)*ease(t);
-   const crossY=t=>start+gap*t;
-   for(let step=1;step<=15;step++){
-    const t=step/15;
-    add({x:crossX(t),y:crossY(t)});
+   // The two chapter lanes differ only slightly. Their connection
+   // uses the existing vertical padding and has no sharp S-crossing.
+   const from=sectionX(s,1),to=next.lane,gap=Math.max(1,next.entry-s.exit);
+   for(let step=1;step<=10;step++){
+    const t=step/10;
+    add(from+(to-from)*ease(t),s.exit+gap*t);
    }
-   // Minimal leaves on the bridge itself: richer foliage lives alongside
-   // the content. Never cluster six sprigs in the middle of a transition.
-   [0.16,.84].forEach((t,i)=>{
-    markers.push({x:crossX(t),y:crossY(t),dir:i===0?(s.side==='left'?-1:1):(next.side==='left'?-1:1),
-      scale:compact?.44:.7,variant:(index+i+1)%3});
-   });
+   if(gap>125){
+    markers.push({x:from+(to-from)*.5,y:s.exit+gap*.5,
+      dir:-1,scale:compact?.43:.66,variant:(index+1)%3});
+   }
   }
  });
- // The lower part of the final chapter has deliberately reserved space.
- // Sweep inward below the biographies, then resolve in a large open flower.
- const last=sections[sections.length-1],flower={
-  x:width*(compact?.53:.51),y:last.bottom-(compact?128:159),
-  scale:compact?.73:1.27
- };
- const from=all[all.length-1],flowerBase=flower.y+91*flower.scale;
- const tail=flowerBase-from.y;
- [
-  [.15,from.x+(flower.x-from.x)*.08],
-  [.37,from.x+(flower.x-from.x)*.32],
-  [.65,from.x+(flower.x-from.x)*.78],
-  [.85,flower.x+(compact?7:-17)],
-  [1,flower.x]
- ].forEach(([t,x])=>add({x,y:from.y+tail*t}));
- const d=organicCurve(all);
- return{d,width,height:root.height,sections,markers,flower,compact};
+ const last=sections[sections.length-1];
+ const flower={x:width*(compact?.53:.51),y:last.bottom-(compact?128:159),
+   scale:compact?.73:1.27};
+ const from=points[points.length-1],flowerBase=flower.y+91*flower.scale;
+ const tail=Math.max(1,flowerBase-from.y);
+ // ONE outward sweep into the large, central final flower; no zigzags.
+ for(let step=1;step<=13;step++){
+  const t=step/13;
+  add(from.x+(flower.x-from.x)*ease(t),from.y+tail*t);
+ }
+ return{d:organicCurve(points),width,height:root.height,sections,markers,
+  miniFlowers,flower,compact};
 }
 
 /* Each motif consists of two elongated, closed leaf contours that emerge
@@ -184,6 +167,29 @@ function Sprig({marker}){
       <path d={vein} className="drawn-vein"
        data-stroke-start={.64+i*.12} data-stroke-end={.99}/>
     </g>)}
+ </g>;
+}
+
+/* A handful of smaller blooms develop naturally along the left-margin vine.
+   Each is line-drawn in scroll order, not merely faded into existence. */
+function SmallBloom({x,y,scale}){
+ const petals=[0,72,144,216,288];
+ return <g className="small-botanical-bloom"
+   data-grow-y={y-102*scale} data-grow-span={177*scale}
+   transform={'translate('+x+' '+y+') scale('+scale+')'}>
+   <path d="M0 32 C-8 14 5 -1 0 -19" className="drawn-twig"
+     data-stroke-start="0" data-stroke-end=".28"/>
+   <path d="M-3 17 C-18 16 -25 9 -25 0 C-12 3 -4 8 -3 17 Z"
+     className="drawn-leaf" data-stroke-start=".15" data-stroke-end=".48"/>
+   <g transform="translate(0 -19)">
+     {petals.map((a,i)=><g key={a} transform={'rotate('+a+')'}>
+       <path d="M0 -4 C-16 -13 -20 -33 -6 -43 Q0 -49 6 -43 C20 -33 16 -13 0 -4 Z"
+         className="drawn-petal" data-stroke-start={.28+i*.09}
+         data-stroke-end={.65+i*.065}/>
+       <path d="M0 -5 C0 -16 0 -31 0 -40" className="drawn-vein"
+         data-stroke-start={.62+i*.07} data-stroke-end=".98"/>
+     </g>)}
+   </g>
  </g>;
 }
 function Flower({x,y,scale}){
@@ -324,6 +330,7 @@ export default function BotanicalThread({routeRef,reduced}){
   data-layout-aware="true" data-side-switches={layout.compact?0:6}>
    <path ref={main} d={layout.d} className="botanical-main-path"/>
    {layout.markers.map((m,i)=><Sprig key={i} marker={m}/>)}
+   {layout.miniFlowers.map((flower,i)=><SmallBloom key={i} {...flower}/>)}
    <Flower {...layout.flower}/>
  </svg>;
 }
