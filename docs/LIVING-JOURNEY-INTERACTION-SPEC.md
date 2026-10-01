@@ -12,21 +12,21 @@ This document describes the design contract for the **implemented feature branch
 - The narrative's main line picks up at the left edge of the first content chapter, so the handoff appears as one visual storyline.
 - Never put a large plant illustration over the hero or explanatory text.
 
-## 3. Layout-aware alternating growth (not an image overlay)
+## 3. Layout-aware left-side growth (not an image overlay)
 - Render **one** continuous SVG path spanning the narrative sections.
 - Measure the actual bounding boxes and effective vertical padding of: `#idea`, `#foundations`, `#project`, `#indonesia`, `#road`, `#involved` and `#people`.
-- On desktop, route the plant through reserved *left*, *right*, *left*, *right*, *left*, *right*, *left* outside gutters.
-- Use **one large, softly rounded botanical bow** along each chapter and **one smooth cross-page arc** between sections. Crossings must fit within the sections' existing upper/lower padding; **never add blank interstitial screens or extra margins for the plant**. All spline segments share the same tangent slope. The main content stays central, and the plant must not cross text, cards or photographs.
-- On narrow screens, avoid page-wide crossings altogether: use a gently winding line in a reserved narrow left gutter. Content must remain readable.
+- Keep the entire botanical thread in a single **left-side gutter** beside every narrative chapter, regardless of alternating text/image composition.
+- Within each chapter, let the thread describe only one slow, subtle rounded swing; use short, continuous curves inside existing padding to connect different measured left gutters. **No cross-page transitions, jagged S-forms or added vertical spacer sections.** Adjacent curves share their tangent direction. The content—not the ornament—remains central.
+- On narrow screens, use a slimmer single left-side groove with proportionally smaller leaves and flowers. Content must remain readable.
 - Recalculate on resize, font load, and image load; changes in text length and EN/DE localization should not break the geometry.
 
 ## 4. Scroll actually draws the line
 - Calculate the drawing tip from the browser viewport and the actual narrative bounding box on each scroll frame, **without rerendering React**.
-- Draw the existing path up to the height reached by the scrolling viewport, including its full horizontal distance. Use a path-length binary search to avoid a pause or jump at left/right transitions.
-- Reverse the drawing naturally on upward scroll. Smooth the **vertical scroll-tip position** (approximately 95 ms) instead of throttling drawn path length; this keeps the main line close to the reader and **automatically makes long horizontal crossings draw faster**. Place the tip around 69% of the viewport height. Branches and the flower follow the actually drawn main tip, not the raw scroll target. No fixed-position botanical overlay or time-only animation.
+- Draw the existing path up to the height reached by the scrolling viewport, including its modest sideways movement. Use a path-length binary search for continuous forward and reverse growth.
+- Reverse the drawing naturally on upward scroll. Smooth the **vertical scroll-tip position** (approximately 95 ms) instead of throttling drawn path length; this keeps the main line close to the reader without an artificial waiting period. Place the tip around 69% of the viewport height. Branches and the flower follow the actually drawn main tip, not the raw scroll target. No fixed-position botanical overlay or time-only animation.
 
 ## 5. Recognizable hand-drawn leaves
-- Place repeated but deliberately staggered pairs of narrow leaves along each chapter and transition; scale their density down on mobile. Position motifs close to the measured curve, rather than the page edge.
+- Place regularly spaced hand-drawn leaf pairs along the left-side stem, including unobtrusive foliage between chapters; reduce motif density on mobile. Add **three occasional small, five-petal line-drawn blossoms** along the route, fully revealed with scroll progress. Keep the large final flower beneath Lea and Jessi.
 - Draw each twig, leaf outline and inner vein sequentially using SVG dash-offset animation coupled to the scrolling tip.
 - Keep the line fine and organic: dark forest green, approximately **1.925 px** for the main desktop route (1.6 px on mobile), with all twig, leaf, vein and petal outlines similarly halved. Transitions reuse the existing chapter padding without introducing any additional space. The design follows the user's annotated curve as a qualitative reference, not an exact tracing.
 - Use extra leaves without filling the page with solid foliage or overlapping the content.
@@ -38,11 +38,11 @@ This document describes the design contract for the **implemented feature branch
 
 ## Review checklist
 - Desktop: Hero retains the earlier strong, scroll-tied zoom and shows the first sprout as it nears completion.
-- Desktop: The vine alternates in the reserved gutters around actual chapter bounds and crosses exclusively in whitespace.
+- Desktop: The vine stays in its reserved left gutter with only broad, gentle sways; transitions use existing padding, never the center of the content.
 - Both languages: All text and images remain unobscured.
 - Mobile: No page-wide crossings, no horizontal overflow, legible single-column reading.
-- Scroll downward/upward, repeatedly and slowly: continuous frame-accurate growth and reversal of the main path, all leaf groups and the flower; no gaps or freezes on the large side-switching arcs.
-- Browser layout: verify the line stays in outer gutters around real content blocks, crosses only within normal chapter padding, and does not insert extra scrolling screens.
+- Scroll downward/upward, repeatedly and slowly: continuous frame-accurate growth and reversal of the main path, leaf pairs, small blossoms and the large final flower; no jumps.
+- Browser layout: verify the left-side line, side-shoots and small blossoms stay outside content blocks and do not insert extra scrolling screens.
 - End of page: the full-sized central flower finishes opening before scroll reaches the footer.
 - Reduced motion: Static readable narrative, fully drawn botanical motif, no forced zoom animation.
 - Five Get Involved choices and their editable prefilled contact message remain working.
