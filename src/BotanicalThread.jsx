@@ -74,8 +74,8 @@ function buildRoute(route){
   // gutter instead of spilling into the copy column.
   const outerSpace=side==='left'?contentLeft:width-contentRight;
   const amplitude=compact?clamp(outerSpace*.10,5,10):clamp(outerSpace*.26,22,59);
-  const entry=top+padTop*.52;
-  const exit=index===6?Math.min(bottom-250,bottom-padBottom*.76):bottom-padBottom*.50;
+  const entry=top+padTop*.83;
+  const exit=index===6?Math.min(bottom-250,bottom-padBottom*.76):bottom-padBottom*.83;
   return{id,node,index,top,bottom,entry,exit,side,lane,amplitude,contentLeft,contentRight};
  }).filter(Boolean);
  if(sections.length!==IDS.length)return null;
@@ -84,10 +84,12 @@ function buildRoute(route){
   if(!all.length||p.y>all[all.length-1].y+.09)all.push({x:p.x,y:p.y});
  };
  const sectionX=(s,t)=>{
-  const drift=Math.sin(t*Math.PI*3.55+s.index*.54)*s.amplitude*.84;
-  const slow=Math.sin(t*Math.PI*1.75+s.index*.67)*s.amplitude*.29;
-  // A left gutter moves towards the edge; right gutter mirrors the shape.
-  return s.lane+(s.side==='left'?1:-1)*(drift+slow);
+  // One broad, rounded botanical bow per section. The envelope has zero
+  // derivative at both ends, so the cross-page bridge meets it smoothly.
+  // Tiny asymmetry keeps it organic without repeated narrow S-kinks.
+  const envelope=Math.sin(Math.PI*t)**2;
+  const bow=envelope*(.73+.09*Math.sin(Math.PI*2*t+s.index*.42));
+  return s.lane+(s.side==='left'?1:-1)*s.amplitude*bow;
  };
  const first=sections[0],firstLane=first.lane;
  add({x:compact?firstLane:firstLane+21,y:0});
@@ -114,27 +116,20 @@ function buildRoute(route){
   if(next){
    const start=s.exit,end=next.entry,gap=end-start;
    const x0=sectionX(s,1),x1=next.lane;
-   // Page transitions only inhabit the extra whitespace between sections.
-   // Multiple waves make them feel like a growing branch, not a diagonal
-   // connector. All y positions ascend, so upward scrolling truly reverses.
-   const crossX=t=>{
-    const main=x0+(x1-x0)*ease(t);
-    const sway=(compact?16:clamp(gap*.20,36,108));
-    const wave=Math.sin(t*Math.PI*2.15)*Math.sin(t*Math.PI)*sway;
-    return main+wave;
-   };
-   // A second, smaller vertical wave removes the ruler-straight
-   // diagonal without violating monotone-y progress needed on scroll-up.
-   const crossY=t=>start+gap*t+
-     Math.sin(t*Math.PI*1.65)*Math.sin(t*Math.PI)*Math.min(39,gap*.06);
-   for(let step=1;step<=23;step++){
-    const t=step/23;
+   // Single generous side-to-side transition across EXISTING section
+   // padding: no extra blank interstitial screens and no zigzagging S-wave.
+   // The cubic easing leaves both ends vertically tangent to their lanes.
+   const crossX=t=>x0+(x1-x0)*ease(t);
+   const crossY=t=>start+gap*t;
+   for(let step=1;step<=15;step++){
+    const t=step/15;
     add({x:crossX(t),y:crossY(t)});
    }
-   [0.18,.31,.45,.57,.70,.83].forEach((t,i)=>{
-    if(compact&&i%2) return;
-    markers.push({x:crossX(t),y:crossY(t),dir:i%2?-1:1,
-      scale:compact?.46:.83,variant:(index+i+1)%3});
+   // Minimal leaves on the bridge itself: richer foliage lives alongside
+   // the content. Never cluster six sprigs in the middle of a transition.
+   [0.16,.84].forEach((t,i)=>{
+    markers.push({x:crossX(t),y:crossY(t),dir:i===0?(s.side==='left'?-1:1):(next.side==='left'?-1:1),
+      scale:compact?.44:.7,variant:(index+i+1)%3});
    });
   }
  });
@@ -256,49 +251,42 @@ export default function BotanicalThread({routeRef,reduced}){
   });
   lengths.current={total,segments};
   el.style.strokeDasharray=String(total);
-  let raf=0,displayedLength=null,previousFrame=0,alive=true;
+  let raf=0,displayedY=null,previousFrame=0,alive=true;
   const center=root.querySelector('[data-flower-center]');
   const flower=root.querySelector('.big-botanical-bloom');
   const draw=(time=0)=>{
    raf=0;
    if(!alive||!routeRef.current||!main.current)return;
-   // Wait until the branch is well inside the viewport. The line should
-   // not race far ahead of the reader on every small scroll gesture.
+   // Animate Y rather than path length: where the route crosses the
+   // screen, its LONG horizontal arc can advance faster automatically,
+   // while the surrounding content retains a normal scroll rhythm.
    const targetY=reduced?layout.height:
-     clamp(window.innerHeight*.53-routeRef.current.getBoundingClientRect().top,0,layout.height);
-   let targetLength=total;
-   if(!reduced){
-    // Strictly monotone y means this lookup reverses cleanly, even
-    // across a winding left/right crossover.
-    let low=0,high=total;
-    for(let i=0;i<19;i++){
-     const middle=(low+high)*.5;
-     if(el.getPointAtLength(middle).y<targetY)low=middle;else high=middle;
-    }
-    targetLength=(low+high)*.5;
-   }
-   if(displayedLength===null){
-    // Direct scroll/navigation to an anchor must not animate thousands
-    // of pixels from the top of the page on first render.
-    displayedLength=targetLength;
+     clamp(window.innerHeight*.69-routeRef.current.getBoundingClientRect().top,0,layout.height);
+   if(displayedY===null){
+     // Direct anchor navigation starts from the correct visible position.
+     displayedY=targetY;
    }else if(reduced){
-    displayedLength=total;
+     displayedY=layout.height;
    }else{
-    const elapsed=previousFrame?clamp((time-previousFrame)/1000,0,.05):1/60;
-    // Low-pass easing plus an explicit physical maximum path velocity.
-    // Both signs use the same rule: scrolling UP truly retracts leaves.
-    const diff=targetLength-displayedLength;
-    const softness=1-Math.exp(-elapsed/0.34);
-    const maxStep=1040*elapsed;
-    const move=Math.sign(diff)*Math.min(Math.abs(diff),Math.abs(diff)*softness,maxStep);
-    displayedLength=clamp(displayedLength+move,0,total);
-    if(Math.abs(targetLength-displayedLength)<.7)displayedLength=targetLength;
+     const elapsed=previousFrame?clamp((time-previousFrame)/1000,0,.05):1/60;
+     const follow=1-Math.exp(-elapsed/.095);
+     displayedY+= (targetY-displayedY)*follow;
+     if(Math.abs(targetY-displayedY)<.65)displayedY=targetY;
    }
    previousFrame=time;
-   el.style.strokeDashoffset=String(Math.max(0,total-displayedLength));
+   let drawn=total;
+   if(!reduced){
+     let low=0,high=total;
+     for(let i=0;i<19;i++){
+       const mid=(low+high)*.5;
+       if(el.getPointAtLength(mid).y<displayedY)low=mid;else high=mid;
+     }
+     drawn=(low+high)*.5;
+   }
+   el.style.strokeDashoffset=String(Math.max(0,total-drawn));
    // Sprigs grow only once the MAIN drawn tip reaches their attachment;
    // slowing the vine therefore also slows its foliage and final bloom.
-   const drawnTipY=el.getPointAtLength(displayedLength).y;
+   const drawnTipY=el.getPointAtLength(drawn).y;
    for(const entry of segments){
     const {node,len,group,start,end}=entry;
     const startY=Number(group.dataset.growY);
@@ -316,9 +304,9 @@ export default function BotanicalThread({routeRef,reduced}){
     center.style.opacity=String(ease((p-.83)/.17));
    }
    root.dataset.scrollTip=String(Math.round(drawnTipY));
-   root.dataset.mainDrawn=String(Math.round(100*displayedLength/Math.max(1,total)));
+   root.dataset.mainDrawn=String(Math.round(100*drawn/Math.max(1,total)));
    // Keep drawing during catch-up even after a touchpad swipe ends.
-   if(!reduced&&Math.abs(targetLength-displayedLength)>.7)request();
+   if(!reduced&&Math.abs(targetY-displayedY)>.65)request();
   };
   const request=()=>{if(alive&&!raf)raf=requestAnimationFrame(draw)};
   request();
