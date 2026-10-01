@@ -77,6 +77,18 @@ function Intro({t,reduced,lang}){
         <h1 className="hero-wordmark" style={{opacity:initial,transform:'translate(-50%,-50%) scale('+(1-shrink*.17)+')'}}>HUMAN<br/>MADE</h1>
         {!reduced&&<span className="hero-scroll-cue" style={{opacity:initial}}>{t.discover} <span aria-hidden="true">↓</span></span>}
       </div>
+      {/* A short sprout visibly begins at the shrinking image's bottom edge.
+          The narrative's main living line continues immediately afterward. */}
+      <svg className="intro-vine-seed" viewBox="0 0 1000 1000"
+        preserveAspectRatio="none" aria-hidden="true"
+        style={{opacity:reduced?0:clamp((p-.62)/.16)}}>
+        <path d="M335 763 C327 790 304 806 277 811 S215 831 176 870 S98 934 61 1012"
+          className="intro-vine-stem"
+          style={{strokeDasharray:440,strokeDashoffset:440*(1-Easing(clamp((p-.62)/.32)))}}/>
+        <path d="M258 817 Q244 787 219 793 Q230 817 258 817 Z M258 817 Q240 800 220 794"
+          className="intro-vine-leaf"
+          style={{strokeDasharray:104,strokeDashoffset:104*(1-Easing(clamp((p-.77)/.19)))}}/>
+      </svg>
       <div className="intro-reveal" style={{opacity:reveal,transform:'translateY('+((1-reveal)*38)+'px)',pointerEvents:reveal>.85?'auto':'none'}}>
         <p className="eyebrow">{t.heroTag}</p><h2>{t.headline}</h2><p>{t.intro}</p>
         <div className="intro-buttons"><a className="btn solid" href="#idea">{t.explore}<span aria-hidden="true">↗</span></a><a className="text-link" href="#involved">{t.join} <span aria-hidden="true">→</span></a></div>
@@ -137,7 +149,7 @@ function NarrativeRoute({t,lang,reduced}){
   const route=useRef(null);
   const progress=useScrollProgress(route,storyProgress);
   return <div ref={route} className="narrative-route">
-    <BotanicalThread progress={progress} reduced={reduced}/>
+    <BotanicalThread routeRef={route} progress={progress} reduced={reduced}/>
     <div className="narrative-content">
       <MemoJourney t={t}/>
       <MemoLaterChapters t={t} lang={lang}/>
