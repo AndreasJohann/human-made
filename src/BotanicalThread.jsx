@@ -147,7 +147,7 @@ export default function BotanicalThread({routeRef,progress,reduced}){
  const vh=typeof window!=='undefined'?window.innerHeight:800;
  // Route's scroll fraction is converted back to local viewport position:
  // no artificial pauses when the curve travels horizontally between sides.
- const tipY=reduced?totalY:clamp(progress*(totalY-vh*.74)+vh*.53,0,totalY);
+ const tipY=reduced?totalY:clamp(progress*(totalY-vh*.74)+vh*.82,0,totalY);
  const [visibleLength,setVisibleLength]=useState(0);
  useEffect(()=>{
    if(!path.current||!layout)return;
@@ -173,6 +173,6 @@ export default function BotanicalThread({routeRef,progress,reduced}){
    {layout.leaves.map((leaf,i)=><LeafCluster key={i}
       {...leaf} progress={reduced?1:clamp((tipY-leaf.y)/115)}/>)}
    <Bloom {...layout.flower}
-      progress={reduced?1:clamp((tipY-(layout.flower.y-170))/220)}/>
+      progress={reduced?1:clamp((tipY-(layout.flower.y-185))/145)}/>
  </svg>;
 }
