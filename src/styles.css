@@ -229,3 +229,39 @@ footer{background:var(--forest);color:#ebf0e7;padding:38px 0;font-size:.88rem}fo
 @media(prefers-reduced-motion:reduce){
  .intro-vine-seed{display:none}
 }
+
+
+/* V4 LIVING VINE: measured content-sensitive route and open crossings. */
+.narrative-route{position:relative;isolation:isolate;overflow:clip}
+.narrative-content{position:static;z-index:auto}
+.journey{isolation:auto;overflow:visible}
+.narrative-route .chapter{margin-bottom:clamp(260px,24vw,375px)}
+.narrative-route .later-section:not(#people){margin-bottom:clamp(260px,24vw,375px)}
+.narrative-route .chapter,.narrative-route .later-section{position:relative}
+.narrative-route .chapter-inner,
+.narrative-route .later-section .content-width{position:relative;z-index:9}
+.narrative-route #people{padding-bottom:clamp(385px,32vw,490px)}
+.botanical-map{position:absolute;inset:0;z-index:6;display:block;width:100%;height:100%;pointer-events:none;overflow:visible}
+.botanical-main-path{fill:none;stroke:#526e50;stroke-width:3.85;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.drawn-twig,.drawn-leaf,.drawn-vein,.drawn-petal{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.drawn-twig{stroke:#5c7857;stroke-width:1.9}
+.drawn-leaf{stroke:#5c7857;stroke-width:1.57}
+.drawn-vein{stroke:#899c80;stroke-width:.9}
+.drawn-petal{stroke:#516f50;stroke-width:2.2}
+.big-botanical-bloom .drawn-leaf{stroke-width:1.75}
+.big-botanical-bloom .drawn-twig{stroke-width:2.45}
+@media(max-width:850px){
+ .narrative-route .chapter,
+ .narrative-route .later-section:not(#people){margin-bottom:128px}
+ .narrative-route #people{padding-bottom:340px}
+}
+@media(max-width:680px){
+ .narrative-route .chapter,
+ .narrative-route .later-section:not(#people){margin-bottom:88px}
+ .narrative-route #people{padding-bottom:270px}
+ .botanical-main-path{stroke-width:3.2}
+ .big-botanical-bloom .drawn-petal{stroke-width:2.05}
+}
+@media(prefers-reduced-motion:reduce){
+ .botanical-map *{animation:none!important;transition:none!important}
+}
