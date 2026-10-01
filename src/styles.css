@@ -274,3 +274,25 @@ footer{background:var(--forest);color:#ebf0e7;padding:38px 0;font-size:.88rem}fo
    padding-right:142px;
  }
 }
+
+/* V5 CONTROLLED BOTANICAL — finer pen strokes and more room for
+   smooth, reversible growth between the editorial content blocks. */
+@media (min-width:851px){
+ .narrative-route .chapter,
+ .narrative-route .later-section:not(#people){
+   margin-bottom:clamp(320px,26vw,440px);
+ }
+}
+.botanical-main-path{stroke-width:1.925}
+.drawn-twig{stroke-width:.95}
+.drawn-leaf{stroke-width:.785}
+.drawn-vein{stroke-width:.45}
+.drawn-petal{stroke-width:1.1}
+.big-botanical-bloom .drawn-leaf{stroke-width:.875}
+.big-botanical-bloom .drawn-twig{stroke-width:1.225}
+.intro-vine-stem{stroke-width:1.55}
+.intro-vine-leaf{stroke-width:.95}
+@media(max-width:680px){
+ .botanical-main-path{stroke-width:1.6}
+ .big-botanical-bloom .drawn-petal{stroke-width:1.025}
+}
