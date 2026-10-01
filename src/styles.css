@@ -286,3 +286,33 @@ footer{background:var(--forest);color:#ebf0e7;padding:38px 0;font-size:.88rem}fo
 /* V6: Content-first page rhythm. Transitions use existing top/bottom
    padding, never added spacer screens between narrative chapters. */
 .narrative-route .chapter,.narrative-route .later-section{margin-bottom:0}
+
+
+/* FINAL: a single page-spanning botanical SVG physically starts on the
+   smaller hero image and continues through the U and the picture-side bloom.
+   Chapter backgrounds remain behind the vine; content is always above it. */
+.living-page{position:relative;isolation:isolate}
+.living-page>.botanical-map{
+ position:absolute;inset:0;display:block;width:100%;height:100%;
+ z-index:6;pointer-events:none;overflow:visible
+}
+.living-page .narrative-route{
+ position:relative;isolation:auto;overflow:visible;z-index:auto
+}
+.living-page .narrative-content{position:static;z-index:auto}
+.living-page .journey{isolation:auto;overflow:visible}
+.living-page .narrative-route .chapter-inner,
+.living-page .narrative-route .later-section .content-width{
+ position:relative;z-index:10
+}
+/* The final flower occupies intentional breathing room ABOVE the
+   picture, not between whole-page chapters or over the biographies. */
+.living-page .people-illustration{
+ padding-top:clamp(178px,16vw,220px);
+}
+@media(max-width:850px){
+ .living-page .people-illustration{padding-top:162px}
+}
+@media(max-width:680px){
+ .living-page .people-illustration{padding-top:145px}
+}
