@@ -81,6 +81,7 @@ function buildRoute(route){
   }
   const at=[.11,.24,.38,.52,.66,.80,.92];
   at.forEach((t,i)=>{
+   if(compact&&i%2) return;
    // A little sketch cluster has two recognizable leaves and visible veins.
    // Across a page this creates a rich, but still fine, botanical drawing.
    markers.push({x:sectionX(s,t),y:s.entry+h*t,dir:s.side==='left'?-1:1,
@@ -104,6 +105,7 @@ function buildRoute(route){
     add({x:crossX(t),y:start+gap*t});
    }
    [0.18,.31,.45,.57,.70,.83].forEach((t,i)=>{
+    if(compact&&i%2) return;
     markers.push({x:crossX(t),y:start+gap*t,dir:i%2?-1:1,
       scale:compact?.46:.83,variant:(index+i+1)%3});
    });
@@ -222,7 +224,7 @@ export default function BotanicalThread({routeRef,reduced}){
    const len=node.getTotalLength();
    node.style.strokeDasharray=String(len);
    node.style.strokeDashoffset=String(len);
-   return{node,len,group:node.closest('[data-grow-y]'),
+   return{node,len,group:node.closest('[data-grow-y]'),lastOffset:null,
      start:Number(node.dataset.strokeStart),end:Number(node.dataset.strokeEnd)};
   });
   lengths.current={total,segments};
@@ -251,7 +253,10 @@ export default function BotanicalThread({routeRef,reduced}){
     const span=Number(group.dataset.growSpan);
     const p=reduced?1:clamp((tipY-startY)/span);
     const fraction=ease((p-start)/Math.max(.02,end-start));
-    node.style.strokeDashoffset=String(len*(1-fraction));
+    const offset=len*(1-fraction);
+    if(entry.lastOffset===offset)continue;
+    node.style.strokeDashoffset=String(offset);
+    entry.lastOffset=offset;
    }
    const center=root.querySelector('[data-flower-center]');
    if(center){
